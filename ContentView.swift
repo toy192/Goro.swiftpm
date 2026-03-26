@@ -18,15 +18,45 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
             VStack(spacing: 0) {
-                inputArea
-                    .padding()
+                Text("語呂合わせメーカー")
+                    .foregroundColor(.white)
+                    .font(.system(size: 24, weight: .bold))
+                    .padding(.top, 60)
+                    .padding(.bottom, 16)
+
+                HStack(spacing: 12) {
+                    TextField("数字を入力...", text: $inputNumber)
+                        .keyboardType(.numberPad)
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color(white: 0.15))
+                        .cornerRadius(12)
+                        .onChange(of: inputNumber) { _ in
+                            selectedReadings = [:]
+                        }
+
+                    if !inputNumber.isEmpty {
+                        Button {
+                            inputNumber = ""
+                            selectedReadings = [:]
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(Color(white: 0.6))
+                                .font(.title2)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
 
                 if digitItems.isEmpty {
                     Spacer()
                     Text("数字を入力してください")
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(Color(white: 0.5))
                     Spacer()
                 } else {
                     ScrollView {
@@ -41,69 +71,43 @@ struct ContentView: View {
                                 }
                             }
                         }
-                        .padding()
+                        .padding(16)
                     }
 
-                    resultArea
+                    VStack(spacing: 12) {
+                        Divider()
+                            .background(Color(white: 0.3))
+
+                        Text(result)
+                            .foregroundColor(.white)
+                            .font(.system(size: 34, weight: .bold))
+                            .minimumScaleFactor(0.4)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+
+                        Button {
+                            UIPasteboard.general.string = result
+                            copied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                copied = false
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                                Text(copied ? "コピーしました" : "コピー")
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(14)
+                            .background(Color.orange)
+                            .cornerRadius(12)
+                            .padding(.horizontal, 16)
+                        }
+                        .padding(.bottom, 24)
+                    }
                 }
             }
-            .navigationTitle("語呂合わせメーカー")
-        }
-    }
-
-    private var inputArea: some View {
-        HStack(spacing: 12) {
-            TextField("数字を入力...", text: $inputNumber)
-                .keyboardType(.numberPad)
-                .font(.title2)
-                .padding(12)
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .onChange(of: inputNumber) { _ in
-                    selectedReadings = [:]
-                }
-
-            if !inputNumber.isEmpty {
-                Button {
-                    inputNumber = ""
-                    selectedReadings = [:]
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                        .font(.title2)
-                }
-            }
-        }
-    }
-
-    private var resultArea: some View {
-        VStack(spacing: 12) {
-            Divider()
-            Text(result)
-                .font(.system(size: 34, weight: .bold))
-                .minimumScaleFactor(0.4)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-                .animation(.default, value: result)
-
-            Button {
-                UIPasteboard.general.string = result
-                copied = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    copied = false
-                }
-            } label: {
-                Label(
-                    copied ? "コピーしました" : "コピー",
-                    systemImage: copied ? "checkmark" : "doc.on.doc"
-                )
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
-            .padding(.bottom)
-            .animation(.default, value: copied)
         }
     }
 }
@@ -119,7 +123,7 @@ struct DigitRowView: View {
             Text(String(item.digit))
                 .font(.title)
                 .fontWeight(.bold)
-                .foregroundStyle(.blue)
+                .foregroundColor(.orange)
                 .frame(width: 36)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -128,22 +132,19 @@ struct DigitRowView: View {
                         Button(reading) {
                             onSelect(reading)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(selected == reading ? .blue : .secondary)
+                        .foregroundColor(selected == reading ? .black : .white)
                         .fontWeight(selected == reading ? .bold : .regular)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(selected == reading ? Color.orange : Color(white: 0.25))
+                        .cornerRadius(20)
                     }
                 }
                 .padding(.vertical, 4)
             }
         }
         .padding(12)
-        .background(Color(.systemGray6))
+        .background(Color(white: 0.12))
         .cornerRadius(10)
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
