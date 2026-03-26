@@ -14,14 +14,25 @@ struct GoroModel {
         "9": ["く", "きゅ", "こ"],
     ]
 
-    struct DigitItem: Identifiable {
-        let id: Int
-        let digit: Character
+    struct GroupItem: Identifiable {
+        let id: Int           // 先頭の絶対インデックス
+        let digits: [Character]
+        var isMerged: Bool { digits.count > 1 }
     }
 
-    static func digitItems(from number: String) -> [DigitItem] {
-        number.filter { $0.isNumber }
-            .enumerated()
-            .map { DigitItem(id: $0.offset, digit: $0.element) }
+    static func groupItems(from number: String, mergedPairs: Set<Int>) -> [GroupItem] {
+        let chars = Array(number.filter { $0.isNumber })
+        var items: [GroupItem] = []
+        var i = 0
+        while i < chars.count {
+            if mergedPairs.contains(i), i + 1 < chars.count {
+                items.append(GroupItem(id: i, digits: [chars[i], chars[i + 1]]))
+                i += 2
+            } else {
+                items.append(GroupItem(id: i, digits: [chars[i]]))
+                i += 1
+            }
+        }
+        return items
     }
 }

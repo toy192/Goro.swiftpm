@@ -2,21 +2,27 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var inputNumber = ""
-    @State private var selectedReadings: [Int: String] = [:]
-    @State private var customWords: [Int: String] = [:]
+    @State private var mergedPairs: Set<Int> = []
+    @State private var selectedReadings: [Int: String] = [:]  // 絶対インデックスで管理
+    @State private var customWords: [Int: String] = [:]       // グループ先頭インデックスで管理
     @State private var copied = false
 
-    var digitItems: [GoroModel.DigitItem] {
-        GoroModel.digitItems(from: inputNumber)
+    var groupItems: [GoroModel.GroupItem] {
+        GoroModel.groupItems(from: inputNumber, mergedPairs: mergedPairs)
+    }
+
+    func groupReading(_ group: GoroModel.GroupItem) -> String {
+        group.digits.enumerated().map { offset, digit in
+            selectedReadings[group.id + offset]
+                ?? GoroModel.readings[digit]?.first
+                ?? String(digit)
+        }.joined()
     }
 
     var result: String {
-        digitItems.map { item in
-            let word = customWords[item.id] ?? ""
-            if !word.isEmpty { return word }
-            return selectedReadings[item.id]
-                ?? GoroModel.readings[item.digit]?.first
-                ?? String(item.digit)
+        groupItems.map { group in
+            let word = customWords[group.id] ?? ""
+            return word.isEmpty ? groupReading(group) : word
         }.joined()
     }
 
@@ -40,6 +46,7 @@ struct ContentView: View {
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
                         .onChange(of: inputNumber) { _ in
+                            mergedPairs = []
                             selectedReadings = [:]
                             customWords = [:]
                         }
@@ -47,6 +54,7 @@ struct ContentView: View {
                     if !inputNumber.isEmpty {
                         Button {
                             inputNumber = ""
+                            mergedPairs = []
                             selectedReadings = [:]
                             customWords = [:]
                         } label: {
@@ -58,28 +66,44 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 16)
 
-                if digitItems.isEmpty {
+                if groupItems.isEmpty {
                     Spacer()
                     Text("数字を入力してください")
                         .foregroundColor(Color(white: 0.5))
                     Spacer()
                 } else {
                     ScrollView {
-                        VStack(spacing: 10) {
-                            ForEach(digitItems) { item in
-                                DigitRowView(
-                                    item: item,
-                                    readings: GoroModel.readings[item.digit] ?? [],
-                                    selected: selectedReadings[item.id],
-                                    customWord: customWords[item.id] ?? "",
-                                    onSelect: { reading in
-                                        selectedReadings[item.id] = reading
-                                        customWords[item.id] = nil
+                        VStack(spacing: 0) {
+                            ForEach(Array(groupItems.enumerated()), id: \.element.id) { index, group in
+                                GroupRowView(
+                                    group: group,
+                                    selectedReadings: selectedReadings,
+                                    customWord: customWords[group.id] ?? "",
+                                    onSelectReading: { absIndex, reading in
+                                        selectedReadings[absIndex] = reading
+                                        customWords[group.id] = nil
                                     },
                                     onWordChange: { word in
-                                        customWords[item.id] = word
+                                        customWords[group.id] = word.isEmpty ? nil : word
+                                    },
+                                    onSplit: {
+                                        mergedPairs.remove(group.id)
+                                        customWords[group.id] = nil
                                     }
                                 )
+
+                                // 隣接する単独グループ間に結合ボタンを表示
+                                if index < groupItems.count - 1 {
+                                    let next = groupItems[index + 1]
+                                    if !group.isMerged && !next.isMerged {
+                                        MergeButton {
+                                            mergedPairs.insert(group.id)
+                                            customWords[group.id] = nil
+                                        }
+                                    } else {
+                                        Spacer().frame(height: 10)
+                                    }
+                                }
                             }
                         }
                         .padding(16)
@@ -123,62 +147,119 @@ struct ContentView: View {
     }
 }
 
-struct DigitRowView: View {
-    let item: GoroModel.DigitItem
-    let readings: [String]
-    let selected: String?
+// MARK: - 結合ボタン
+
+struct MergeButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: "link")
+                Text("結合")
+                    .font(.system(size: 12))
+            }
+            .foregroundColor(Color(white: 0.5))
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(Color(white: 0.1))
+            .cornerRadius(8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - グループ行
+
+struct GroupRowView: View {
+    let group: GoroModel.GroupItem
+    let selectedReadings: [Int: String]
     let customWord: String
-    let onSelect: (String) -> Void
+    let onSelectReading: (Int, String) -> Void
     let onWordChange: (String) -> Void
+    let onSplit: () -> Void
+
+    var combinedReading: String {
+        group.digits.enumerated().map { offset, digit in
+            selectedReadings[group.id + offset]
+                ?? GoroModel.readings[digit]?.first
+                ?? String(digit)
+        }.joined()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Text(String(item.digit))
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.orange)
-                    .frame(width: 36)
+            // 数字とかな選択
+            HStack(alignment: .top, spacing: 8) {
+                // 各桁のかな選択
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(group.digits.enumerated()), id: \.offset) { offset, digit in
+                        let absIndex = group.id + offset
+                        let selected = selectedReadings[absIndex]
+                        HStack(spacing: 8) {
+                            Text(String(digit))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.orange)
+                                .frame(width: 28)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(readings, id: \.self) { reading in
-                            Button(reading) {
-                                onSelect(reading)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 6) {
+                                    ForEach(GoroModel.readings[digit] ?? [], id: \.self) { kana in
+                                        Button(kana) {
+                                            onSelectReading(absIndex, kana)
+                                        }
+                                        .foregroundColor(selected == kana && customWord.isEmpty ? .black : .white)
+                                        .fontWeight(selected == kana ? .bold : .regular)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(selected == kana && customWord.isEmpty ? Color.orange : Color(white: 0.25))
+                                        .cornerRadius(16)
+                                    }
+                                }
+                                .padding(.vertical, 2)
                             }
-                            .foregroundColor(selected == reading && customWord.isEmpty ? .black : .white)
-                            .fontWeight(selected == reading ? .bold : .regular)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(selected == reading && customWord.isEmpty ? Color.orange : Color(white: 0.25))
-                            .cornerRadius(20)
                         }
                     }
-                    .padding(.vertical, 4)
+                }
+
+                // 分割ボタン（結合済みのみ）
+                if group.isMerged {
+                    Button(action: onSplit) {
+                        Image(systemName: "scissors")
+                            .foregroundColor(Color(white: 0.5))
+                            .padding(8)
+                            .background(Color(white: 0.18))
+                            .cornerRadius(8)
+                    }
                 }
             }
 
-            if selected != nil {
-                HStack(spacing: 8) {
-                    Text(selected ?? "")
-                        .foregroundColor(Color.orange)
-                        .font(.system(size: 13))
-                        .frame(width: 36)
+            // 読みと言葉の入力
+            HStack(spacing: 8) {
+                Text(combinedReading)
+                    .foregroundColor(.orange)
+                    .font(.system(size: 13))
+                    .frame(minWidth: 36)
 
-                    TextField("「\(selected ?? "")」で始まる言葉...", text: Binding(
-                        get: { customWord },
-                        set: { onWordChange($0) }
-                    ))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(Color(white: 0.2))
-                    .cornerRadius(8)
-                }
+                TextField("「\(combinedReading)」の言葉...", text: Binding(
+                    get: { customWord },
+                    set: { onWordChange($0) }
+                ))
+                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(white: 0.2))
+                .cornerRadius(8)
             }
         }
         .padding(12)
-        .background(Color(white: 0.12))
+        .background(group.isMerged ? Color(red: 0.1, green: 0.12, blue: 0.18) : Color(white: 0.12))
         .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(group.isMerged ? Color.blue.opacity(0.4) : Color.clear, lineWidth: 1)
+        )
     }
 }
