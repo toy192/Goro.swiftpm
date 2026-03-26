@@ -1,10 +1,10 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.7
 import PackageDescription
 
 let package = Package(
     name: "Goro",
     platforms: [
-        .iOS("17.0")
+        .iOS("16.0")
     ],
     products: [
         .iOSApplication(
@@ -31,7 +31,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "Sources"
+            path: "."
         )
     ]
 )
