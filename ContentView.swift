@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var inputNumber = ""
     @State private var selectedReadings: [Int: String] = [:]
+    @State private var customWords: [Int: String] = [:]
     @State private var copied = false
 
     var digitItems: [GoroModel.DigitItem] {
@@ -11,7 +12,9 @@ struct ContentView: View {
 
     var result: String {
         digitItems.map { item in
-            selectedReadings[item.id]
+            let word = customWords[item.id] ?? ""
+            if !word.isEmpty { return word }
+            return selectedReadings[item.id]
                 ?? GoroModel.readings[item.digit]?.first
                 ?? String(item.digit)
         }.joined()
@@ -38,12 +41,14 @@ struct ContentView: View {
                         .cornerRadius(12)
                         .onChange(of: inputNumber) { _ in
                             selectedReadings = [:]
+                            customWords = [:]
                         }
 
                     if !inputNumber.isEmpty {
                         Button {
                             inputNumber = ""
                             selectedReadings = [:]
+                            customWords = [:]
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(Color(white: 0.6))
@@ -65,10 +70,16 @@ struct ContentView: View {
                                 DigitRowView(
                                     item: item,
                                     readings: GoroModel.readings[item.digit] ?? [],
-                                    selected: selectedReadings[item.id]
-                                ) { reading in
-                                    selectedReadings[item.id] = reading
-                                }
+                                    selected: selectedReadings[item.id],
+                                    customWord: customWords[item.id] ?? "",
+                                    onSelect: { reading in
+                                        selectedReadings[item.id] = reading
+                                        customWords[item.id] = nil
+                                    },
+                                    onWordChange: { word in
+                                        customWords[item.id] = word
+                                    }
+                                )
                             }
                         }
                         .padding(16)
@@ -116,31 +127,54 @@ struct DigitRowView: View {
     let item: GoroModel.DigitItem
     let readings: [String]
     let selected: String?
+    let customWord: String
     let onSelect: (String) -> Void
+    let onWordChange: (String) -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Text(String(item.digit))
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.orange)
-                .frame(width: 36)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Text(String(item.digit))
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.orange)
+                    .frame(width: 36)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(readings, id: \.self) { reading in
-                        Button(reading) {
-                            onSelect(reading)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(readings, id: \.self) { reading in
+                            Button(reading) {
+                                onSelect(reading)
+                            }
+                            .foregroundColor(selected == reading && customWord.isEmpty ? .black : .white)
+                            .fontWeight(selected == reading ? .bold : .regular)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(selected == reading && customWord.isEmpty ? Color.orange : Color(white: 0.25))
+                            .cornerRadius(20)
                         }
-                        .foregroundColor(selected == reading ? .black : .white)
-                        .fontWeight(selected == reading ? .bold : .regular)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(selected == reading ? Color.orange : Color(white: 0.25))
-                        .cornerRadius(20)
                     }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
+            }
+
+            if selected != nil {
+                HStack(spacing: 8) {
+                    Text(selected ?? "")
+                        .foregroundColor(Color.orange)
+                        .font(.system(size: 13))
+                        .frame(width: 36)
+
+                    TextField("「\(selected ?? "")」で始まる言葉...", text: Binding(
+                        get: { customWord },
+                        set: { onWordChange($0) }
+                    ))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Color(white: 0.2))
+                    .cornerRadius(8)
+                }
             }
         }
         .padding(12)
