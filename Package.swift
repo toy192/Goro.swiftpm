@@ -1,10 +1,10 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
     name: "Goro",
     platforms: [
-        .iOS("16.0")
+        .iOS("17.0")
     ],
     products: [
         .iOSApplication(
