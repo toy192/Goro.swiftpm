@@ -18,6 +18,7 @@ struct GoroModel {
     static let suggestions: [String: [String]] = [
         // 1桁
         "0": ["丸", "わ", "和", "倭", "羽", "冷"],
+        "1": ["ひと"],
         "2": ["じ"],
         "6": ["ろく"],
         // 0x
