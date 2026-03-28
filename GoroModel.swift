@@ -2,7 +2,7 @@ import Foundation
 
 struct GoroModel {
     static let readings: [Character: [String]] = [
-        "0": ["れ", "ぜ", "お", "まる"],
+        "0": ["れ", "ぜ", "お", "まる", "まと"],
         "1": ["い", "ひ", "いち"],
         "2": ["に", "ふ", "ふた"],
         "3": ["さ", "み", "さん"],
@@ -16,6 +16,8 @@ struct GoroModel {
 
     // 2〜3桁の組み合わせに対する覚えやすい候補
     static let suggestions: [String: [String]] = [
+        // 1桁
+        "0": ["丸"],
         // 0x
         "01": ["零", "礼", "甥"],       // れい / おい
         "02": ["鬼", "列", "烈", "レツ"], // おに / れつ

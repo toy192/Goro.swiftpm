@@ -233,7 +233,7 @@ struct GroupRowView: View {
                 }
             }
 
-            if group.isMerged, let candidates = GoroModel.suggestions[group.digitKey], !candidates.isEmpty {
+            if let candidates = GoroModel.suggestions[group.digitKey], !candidates.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(candidates, id: \.self) { candidate in
