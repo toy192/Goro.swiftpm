@@ -45,7 +45,7 @@ struct ContentView: View {
                         .padding(12)
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
-                        .onChange(of: inputNumber) { _ in
+                        .onChange(of: inputNumber) {
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
