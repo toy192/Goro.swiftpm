@@ -236,6 +236,26 @@ struct GroupRowView: View {
                 }
             }
 
+            // 候補チップ（結合済みのみ）
+            if group.isMerged, let candidates = GoroModel.suggestions[group.digitKey], !candidates.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(candidates, id: \.self) { candidate in
+                            Button(candidate) {
+                                onWordChange(candidate)
+                            }
+                            .foregroundColor(customWord == candidate ? .black : .orange)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(customWord == candidate ? Color.orange : Color.orange.opacity(0.15))
+                            .cornerRadius(16)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+
             // 読みと言葉の入力
             HStack(spacing: 8) {
                 Text(combinedReading)
