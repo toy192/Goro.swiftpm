@@ -46,6 +46,10 @@ struct ContentView: View {
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
                         .onChange(of: inputNumber) {
+                            let filtered = inputNumber.filter { $0.isNumber || $0 == "-" }
+                            if filtered != inputNumber {
+                                inputNumber = filtered
+                            }
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
