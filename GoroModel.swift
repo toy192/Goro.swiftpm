@@ -2,7 +2,7 @@ import Foundation
 
 struct GoroModel {
     static let readings: [Character: [String]] = [
-        "0": ["れ", "ぜ", "お", "まる", "まと"],
+        "0": ["れ", "ぜ", "お", "まる", "ま"],
         "1": ["い", "ひ", "いち"],
         "2": ["に", "ふ", "ふた"],
         "3": ["さ", "み", "さん"],
