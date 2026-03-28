@@ -39,7 +39,7 @@ struct ContentView: View {
 
                 HStack(spacing: 12) {
                     TextField("数字を入力...", text: $inputNumber)
-                        .keyboardType(.numberPad)
+                        .keyboardType(.numbersAndPunctuation)
                         .font(.title2)
                         .foregroundColor(.white)
                         .padding(12)
@@ -95,7 +95,8 @@ struct ContentView: View {
                                 if index < groupItems.count - 1 {
                                     let next = groupItems[index + 1]
                                     let combined = group.digits.count + next.digits.count
-                                    if combined <= 4 {
+                                    let hasDash = group.digits.contains("-") || next.digits.contains("-")
+                                    if combined <= 4 && !hasDash {
                                         MergeButton {
                                             mergedGroups[group.id] = combined
                                             customWords[group.id] = nil
@@ -269,7 +270,7 @@ struct GroupRowView: View {
                 .cornerRadius(8)
             }
         }
-        .padding(12)
+        .padding(group.digits == ["-"] ? 6 : 12)
         .background(group.isMerged ? Color(red: 0.1, green: 0.12, blue: 0.18) : Color(white: 0.12))
         .cornerRadius(10)
         .overlay(

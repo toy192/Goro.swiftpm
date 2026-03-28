@@ -12,6 +12,7 @@ struct GoroModel {
         "7": ["な", "しち", "なな"],
         "8": ["は", "や", "はち"],
         "9": ["く", "きゅ", "こ"],
+        "-": ["-"],
     ]
 
     // 2〜3桁の組み合わせに対する覚えやすい候補
@@ -192,7 +193,7 @@ struct GoroModel {
 
     // mergedGroups: キー=開始インデックス、値=グループサイズ(2 or 3)
     static func groupItems(from number: String, mergedGroups: [Int: Int]) -> [GroupItem] {
-        let chars = Array(number.filter { $0.isNumber })
+        let chars = Array(number.filter { $0.isNumber || $0 == "-" })
         var items: [GroupItem] = []
         var i = 0
         while i < chars.count {
