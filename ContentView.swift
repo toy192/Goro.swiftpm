@@ -95,8 +95,7 @@ struct ContentView: View {
                                 if index < groupItems.count - 1 {
                                     let next = groupItems[index + 1]
                                     let combined = group.digits.count + next.digits.count
-                                    let hasDash = group.digits.contains("-") || next.digits.contains("-")
-                                    if combined <= 4 && !hasDash {
+                                    if combined <= 4 {
                                         MergeButton {
                                             mergedGroups[group.id] = combined
                                             customWords[group.id] = nil
