@@ -122,18 +122,15 @@ struct GoroModel {
         var digitKey: String { String(digits) }
     }
 
-    static func groupItems(from number: String, mergedPairs: Set<Int>) -> [GroupItem] {
+    // mergedGroups: キー=開始インデックス、値=グループサイズ(2 or 3)
+    static func groupItems(from number: String, mergedGroups: [Int: Int]) -> [GroupItem] {
         let chars = Array(number.filter { $0.isNumber })
         var items: [GroupItem] = []
         var i = 0
         while i < chars.count {
-            if mergedPairs.contains(i), i + 1 < chars.count {
-                items.append(GroupItem(id: i, digits: [chars[i], chars[i + 1]]))
-                i += 2
-            } else {
-                items.append(GroupItem(id: i, digits: [chars[i]]))
-                i += 1
-            }
+            let size = min(mergedGroups[i] ?? 1, chars.count - i)
+            items.append(GroupItem(id: i, digits: Array(chars[i..<(i + size)])))
+            i += size
         }
         return items
     }

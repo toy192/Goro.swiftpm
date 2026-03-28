@@ -2,13 +2,13 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var inputNumber = ""
-    @State private var mergedPairs: Set<Int> = []
-    @State private var selectedReadings: [Int: String] = [:]  // 絶対インデックスで管理
-    @State private var customWords: [Int: String] = [:]       // グループ先頭インデックスで管理
+    @State private var mergedGroups: [Int: Int] = [:]  // 開始インデックス → グループサイズ
+    @State private var selectedReadings: [Int: String] = [:]
+    @State private var customWords: [Int: String] = [:]
     @State private var copied = false
 
     var groupItems: [GoroModel.GroupItem] {
-        GoroModel.groupItems(from: inputNumber, mergedPairs: mergedPairs)
+        GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
     }
 
     func groupReading(_ group: GoroModel.GroupItem) -> String {
@@ -46,7 +46,7 @@ struct ContentView: View {
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
                         .onChange(of: inputNumber) { _ in
-                            mergedPairs = []
+                            mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
                         }
@@ -54,7 +54,7 @@ struct ContentView: View {
                     if !inputNumber.isEmpty {
                         Button {
                             inputNumber = ""
-                            mergedPairs = []
+                            mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
                         } label: {
@@ -87,17 +87,17 @@ struct ContentView: View {
                                         customWords[group.id] = word.isEmpty ? nil : word
                                     },
                                     onSplit: {
-                                        mergedPairs.remove(group.id)
+                                        mergedGroups.removeValue(forKey: group.id)
                                         customWords[group.id] = nil
                                     }
                                 )
 
-                                // 隣接する単独グループ間に結合ボタンを表示
                                 if index < groupItems.count - 1 {
                                     let next = groupItems[index + 1]
-                                    if !group.isMerged && !next.isMerged {
+                                    let combined = group.digits.count + next.digits.count
+                                    if combined <= 3 {
                                         MergeButton {
-                                            mergedPairs.insert(group.id)
+                                            mergedGroups[group.id] = combined
                                             customWords[group.id] = nil
                                         }
                                     } else {
@@ -190,9 +190,7 @@ struct GroupRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 数字とかな選択
             HStack(alignment: .top, spacing: 8) {
-                // 各桁のかな選択
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(group.digits.enumerated()), id: \.offset) { offset, digit in
                         let absIndex = group.id + offset
@@ -224,7 +222,6 @@ struct GroupRowView: View {
                     }
                 }
 
-                // 分割ボタン（結合済みのみ）
                 if group.isMerged {
                     Button(action: onSplit) {
                         Image(systemName: "scissors")
@@ -236,7 +233,6 @@ struct GroupRowView: View {
                 }
             }
 
-            // 候補チップ（結合済みのみ）
             if group.isMerged, let candidates = GoroModel.suggestions[group.digitKey], !candidates.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
@@ -256,7 +252,6 @@ struct GroupRowView: View {
                 }
             }
 
-            // 読みと言葉の入力
             HStack(spacing: 8) {
                 Text(combinedReading)
                     .foregroundColor(.orange)
