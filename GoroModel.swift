@@ -133,6 +133,7 @@ struct GoroModel {
         "634": ["武蔵"],                   // む・さ・し
         // 4桁
         "0602": ["オムレツ"],            // お・む・れ・つ
+        "1031": ["天才"],                // い・ま・さ・い
     ]
 
     struct GroupItem: Identifiable {
