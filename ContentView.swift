@@ -99,7 +99,7 @@ struct ContentView: View {
                                 if index < groupItems.count - 1 {
                                     let next = groupItems[index + 1]
                                     let combined = group.digits.count + next.digits.count
-                                    if combined <= 5 {
+                                    if combined <= 6 {
                                         MergeButton {
                                             mergedGroups[group.id] = combined
                                             customWords[group.id] = nil
