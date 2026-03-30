@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var historyStore = HistoryStore()
     @State private var inputNumber = ""
     @State private var mergedGroups: [Int: Int] = [:]  // 開始インデックス → グループサイズ
     @State private var selectedReadings: [Int: String] = [:]
     @State private var customWords: [Int: String] = [:]
     @State private var copied = false
+    @State private var saved = false
+    @State private var showingHistory = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -31,11 +34,22 @@ struct ContentView: View {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Text("語呂合わせメーカー")
-                    .foregroundColor(.white)
-                    .font(.system(size: 24, weight: .bold))
-                    .padding(.top, 60)
-                    .padding(.bottom, 16)
+                HStack {
+                    Text("GoroBell")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 24, weight: .bold))
+                    Spacer()
+                    Button {
+                        showingHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(historyStore.items.isEmpty ? Color(white: 0.4) : .orange)
+                            .font(.title2)
+                    }
+                }
+                .padding(.top, 60)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
 
                 HStack(spacing: 12) {
                     TextField("数字を入力...", text: $inputNumber)
@@ -125,26 +139,129 @@ struct ContentView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
 
-                        Button {
-                            UIPasteboard.general.string = result
-                            copied = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                copied = false
+                        HStack(spacing: 12) {
+                            Button {
+                                UIPasteboard.general.string = result
+                                copied = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    copied = false
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                                    Text(copied ? "コピー済" : "コピー")
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(14)
+                                .background(Color.orange)
+                                .cornerRadius(12)
                             }
-                        } label: {
-                            HStack {
-                                Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                                Text(copied ? "コピーしました" : "コピー")
+
+                            Button {
+                                historyStore.add(
+                                    inputNumber: inputNumber,
+                                    result: result,
+                                    mergedGroups: mergedGroups,
+                                    selectedReadings: selectedReadings,
+                                    customWords: customWords
+                                )
+                                saved = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    saved = false
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: saved ? "checkmark" : "bookmark")
+                                    Text(saved ? "保存済" : "保存")
+                                }
+                                .foregroundColor(.white)
+                                .padding(14)
+                                .background(Color(white: 0.25))
+                                .cornerRadius(12)
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(14)
-                            .background(Color.orange)
-                            .cornerRadius(12)
-                            .padding(.horizontal, 16)
                         }
+                        .padding(.horizontal, 16)
                         .padding(.bottom, 24)
                     }
+                }
+            }
+        }
+        .sheet(isPresented: $showingHistory) {
+            HistoryView(store: historyStore) { item in
+                inputNumber = item.inputNumber
+                mergedGroups = historyStore.intMergedGroups(item)
+                selectedReadings = historyStore.intSelectedReadings(item)
+                customWords = historyStore.intCustomWords(item)
+                showingHistory = false
+            }
+        }
+    }
+}
+
+// MARK: - 履歴ビュー
+
+struct HistoryView: View {
+    @ObservedObject var store: HistoryStore
+    let onRestore: (HistoryItem) -> Void
+
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        f.timeStyle = .short
+        f.locale = Locale(identifier: "ja_JP")
+        return f
+    }()
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            VStack(spacing: 0) {
+                HStack {
+                    Text("保存済み語呂合わせ")
+                        .foregroundColor(.white)
+                        .font(.system(size: 20, weight: .bold))
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 24)
+                .padding(.bottom, 12)
+
+                if store.items.isEmpty {
+                    Spacer()
+                    Text("保存された語呂合わせはありません")
+                        .foregroundColor(Color(white: 0.5))
+                    Spacer()
+                } else {
+                    List {
+                        ForEach(store.items) { item in
+                            Button {
+                                onRestore(item)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack {
+                                        Text(item.inputNumber)
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.orange)
+                                        Spacer()
+                                        Text(dateFormatter.string(from: item.date))
+                                            .font(.system(size: 11))
+                                            .foregroundColor(Color(white: 0.5))
+                                    }
+                                    Text(item.result)
+                                        .font(.system(size: 22, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .listRowBackground(Color(white: 0.12))
+                        }
+                        .onDelete { offsets in
+                            store.delete(at: offsets)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
         }
