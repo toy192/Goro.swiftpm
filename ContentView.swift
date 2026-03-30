@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var copied = false
     @State private var saved = false
     @State private var showingHistory = false
+    @State private var showingHelp = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -39,6 +40,13 @@ struct ContentView: View {
                         .foregroundColor(.orange)
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
+                    Button {
+                        showingHelp = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .foregroundColor(Color(white: 0.6))
+                            .font(.title2)
+                    }
                     Button {
                         showingHistory = true
                     } label: {
@@ -186,6 +194,9 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingHelp) {
+            HelpView()
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(store: historyStore) { item in
