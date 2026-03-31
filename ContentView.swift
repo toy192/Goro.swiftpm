@@ -23,11 +23,17 @@ struct ContentView: View {
         }.joined()
     }
 
+    var isMyNumber: Bool {
+        let digits = inputNumber.filter { $0.isNumber }
+        return digits.count == 12 && !inputNumber.contains("-")
+    }
+
     var result: String {
-        groupItems.map { group in
+        let words = groupItems.map { group in
             let word = customWords[group.id] ?? ""
             return word.isEmpty ? groupReading(group) : word
-        }.joined()
+        }
+        return words.joined(separator: isMyNumber ? " " : "")
     }
 
     var body: some View {
@@ -68,13 +74,29 @@ struct ContentView: View {
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
                         .onChange(of: inputNumber) {
-                            let filtered = inputNumber.filter { $0.isNumber || $0 == "-" }
-                            if filtered != inputNumber {
-                                inputNumber = filtered
+                            // 数字とハイフン以外を除去
+                            let stripped = inputNumber.filter { $0.isNumber || $0 == "-" }
+                            // ハイフンなしの場合は4桁ごとにスペースを自動挿入
+                            let formatted: String
+                            if !stripped.contains("-") {
+                                var tmp = ""
+                                for (i, c) in stripped.enumerated() {
+                                    if i > 0 && i % 4 == 0 { tmp.append(" ") }
+                                    tmp.append(c)
+                                }
+                                formatted = tmp
+                            } else {
+                                formatted = stripped
                             }
+                            if formatted != inputNumber { inputNumber = formatted }
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
+                            // マイナンバーモード: 12桁で自動4+4+4分割
+                            let digits = stripped.filter { $0.isNumber }
+                            if digits.count == 12 && !stripped.contains("-") {
+                                mergedGroups = [0: 4, 4: 4, 8: 4]
+                            }
                         }
 
                     if !inputNumber.isEmpty {
@@ -91,6 +113,20 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+
+                if isMyNumber {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.text.rectangle")
+                        Text("マイナンバーモード（4桁区切り）")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.orange)
+                    .cornerRadius(20)
+                    .padding(.bottom, 8)
+                }
 
                 if groupItems.isEmpty {
                     Spacer()
