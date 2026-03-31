@@ -74,16 +74,27 @@ struct ContentView: View {
                         .background(Color(white: 0.15))
                         .cornerRadius(12)
                         .onChange(of: inputNumber) {
-                            let filtered = inputNumber.filter { $0.isNumber || $0 == "-" }
-                            if filtered != inputNumber {
-                                inputNumber = filtered
+                            // 数字とハイフン以外を除去
+                            let stripped = inputNumber.filter { $0.isNumber || $0 == "-" }
+                            // ハイフンなしの場合は4桁ごとにスペースを自動挿入
+                            let formatted: String
+                            if !stripped.contains("-") {
+                                var tmp = ""
+                                for (i, c) in stripped.enumerated() {
+                                    if i > 0 && i % 4 == 0 { tmp.append(" ") }
+                                    tmp.append(c)
+                                }
+                                formatted = tmp
+                            } else {
+                                formatted = stripped
                             }
+                            if formatted != inputNumber { inputNumber = formatted }
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
                             // マイナンバーモード: 12桁で自動4+4+4分割
-                            let digits = filtered.filter { $0.isNumber }
-                            if digits.count == 12 && !filtered.contains("-") {
+                            let digits = stripped.filter { $0.isNumber }
+                            if digits.count == 12 && !stripped.contains("-") {
                                 mergedGroups = [0: 4, 4: 4, 8: 4]
                             }
                         }
