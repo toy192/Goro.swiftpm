@@ -41,15 +41,8 @@ struct ContentView: View {
         return digits.hasPrefix("0")
     }
 
-    // 固定電話のグループ: 03/06は2+4+4、それ以外は3+3+4
-    var landlineGroups: [Int: Int] {
-        let digits = inputNumber.filter { $0.isNumber }
-        let prefix2 = String(digits.prefix(2))
-        if ["03", "06"].contains(prefix2) {
-            return [0: 2, 2: 4, 6: 4]
-        }
-        return [0: 3, 3: 3, 6: 4]
-    }
+    // 固定電話のグループ: 4+2+4
+    var landlineGroups: [Int: Int] { [0: 4, 4: 2, 6: 4] }
 
     var result: String {
         let words = groupItems.map { group in
@@ -111,13 +104,8 @@ struct ContentView: View {
                                         // 携帯番号モード: 3+4+4
                                         if i == 3 || i == 7 { tmp.append(" ") }
                                     } else if digitCount == 10 && stripped.hasPrefix("0") {
-                                        // 固定電話モード: 03/06→2+4+4, その他→3+3+4
-                                        let p2 = String(stripped.prefix(2))
-                                        if ["03", "06"].contains(p2) {
-                                            if i == 2 || i == 6 { tmp.append(" ") }
-                                        } else {
-                                            if i == 3 || i == 6 { tmp.append(" ") }
-                                        }
+                                        // 固定電話モード: 4+2+4
+                                        if i == 4 || i == 6 { tmp.append(" ") }
                                     } else {
                                         // デフォルト: 4桁ごと
                                         if i > 0 && i % 4 == 0 { tmp.append(" ") }
@@ -142,12 +130,7 @@ struct ContentView: View {
                                         mergedGroups = [0: 3, 3: 4, 7: 4]     // 携帯番号
                                     }
                                 } else if digitCount == 10 && digits.hasPrefix("0") {
-                                    let p2 = String(digits.prefix(2))
-                                    if ["03", "06"].contains(p2) {
-                                        mergedGroups = [0: 2, 2: 4, 6: 4]     // 固定電話(2+4+4)
-                                    } else {
-                                        mergedGroups = [0: 3, 3: 3, 6: 4]     // 固定電話(3+3+4)
-                                    }
+                                    mergedGroups = [0: 4, 4: 2, 6: 4]         // 固定電話(4+2+4)
                                 }
                             }
                         }
@@ -192,11 +175,9 @@ struct ContentView: View {
                     .cornerRadius(20)
                     .padding(.bottom, 8)
                 } else if isLandline {
-                    let p2 = String(inputNumber.filter { $0.isNumber }.prefix(2))
-                    let fmt = ["03", "06"].contains(p2) ? "2+4+4" : "3+3+4"
                     HStack(spacing: 6) {
                         Image(systemName: "phone.fill")
-                        Text("固定電話モード（\(fmt)）")
+                        Text("固定電話モード（4+2+4）")
                             .font(.system(size: 13, weight: .bold))
                     }
                     .foregroundColor(.black)
