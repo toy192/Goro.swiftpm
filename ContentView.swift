@@ -105,6 +105,7 @@ struct ContentView: View {
                                     group: group,
                                     selectedReadings: selectedReadings,
                                     customWord: customWords[group.id] ?? "",
+                                    userCandidates: historyStore.userSuggestions[group.digitKey] ?? [],
                                     onSelectReading: { absIndex, reading in
                                         selectedReadings[absIndex] = reading
                                         customWords[group.id] = nil
@@ -308,6 +309,7 @@ struct GroupRowView: View {
     let group: GoroModel.GroupItem
     let selectedReadings: [Int: String]
     let customWord: String
+    var userCandidates: [String] = []
     let onSelectReading: (Int, String) -> Void
     let onWordChange: (String) -> Void
     let onSplit: () -> Void
@@ -365,19 +367,28 @@ struct GroupRowView: View {
                 }
             }
 
-            if let candidates = GoroModel.suggestions[group.digitKey], !candidates.isEmpty {
+            let builtinCandidates = GoroModel.suggestions[group.digitKey] ?? []
+            let filteredUserCandidates = userCandidates.filter { !builtinCandidates.contains($0) }
+            if !builtinCandidates.isEmpty || !filteredUserCandidates.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        ForEach(candidates, id: \.self) { candidate in
-                            Button(candidate) {
-                                onWordChange(candidate)
-                            }
-                            .foregroundColor(customWord == candidate ? .black : .orange)
-                            .fontWeight(.bold)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(customWord == candidate ? Color.orange : Color.orange.opacity(0.15))
-                            .cornerRadius(16)
+                        ForEach(builtinCandidates, id: \.self) { candidate in
+                            Button(candidate) { onWordChange(candidate) }
+                                .foregroundColor(customWord == candidate ? .black : .orange)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(customWord == candidate ? Color.orange : Color.orange.opacity(0.15))
+                                .cornerRadius(16)
+                        }
+                        ForEach(filteredUserCandidates, id: \.self) { candidate in
+                            Button(candidate) { onWordChange(candidate) }
+                                .foregroundColor(customWord == candidate ? .black : Color(red: 0.4, green: 0.8, blue: 1.0))
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(customWord == candidate ? Color(red: 0.4, green: 0.8, blue: 1.0) : Color(red: 0.4, green: 0.8, blue: 1.0).opacity(0.15))
+                                .cornerRadius(16)
                         }
                     }
                     .padding(.vertical, 2)
