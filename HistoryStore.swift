@@ -39,6 +39,25 @@ class HistoryStore: ObservableObject {
         persist()
     }
 
+    // 履歴からユーザー独自の候補を digitKey → [word] で返す
+    var userSuggestions: [String: [String]] {
+        var result: [String: [String]] = [:]
+        for item in items {
+            let mg = intMergedGroups(item)
+            let cw = intCustomWords(item)
+            let groups = GoroModel.groupItems(from: item.inputNumber, mergedGroups: mg)
+            for group in groups {
+                if let word = cw[group.id], !word.isEmpty {
+                    if result[group.digitKey] == nil { result[group.digitKey] = [] }
+                    if !result[group.digitKey]!.contains(word) {
+                        result[group.digitKey]!.append(word)
+                    }
+                }
+            }
+        }
+        return result
+    }
+
     // Int キーに変換して返す
     func intMergedGroups(_ item: HistoryItem) -> [Int: Int] {
         Dictionary(uniqueKeysWithValues: item.mergedGroups.compactMap {
