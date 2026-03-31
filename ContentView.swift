@@ -35,12 +35,28 @@ struct ContentView: View {
         return ["090", "080", "070"].contains(prefix)
     }
 
+    var isLandline: Bool {
+        let digits = inputNumber.filter { $0.isNumber }
+        guard digits.count == 10 && !inputNumber.contains("-") else { return false }
+        return digits.hasPrefix("0")
+    }
+
+    // 固定電話のグループ: 03/06は2+4+4、それ以外は3+3+4
+    var landlineGroups: [Int: Int] {
+        let digits = inputNumber.filter { $0.isNumber }
+        let prefix2 = String(digits.prefix(2))
+        if ["03", "06"].contains(prefix2) {
+            return [0: 2, 2: 4, 6: 4]
+        }
+        return [0: 3, 3: 3, 6: 4]
+    }
+
     var result: String {
         let words = groupItems.map { group in
             let word = customWords[group.id] ?? ""
             return word.isEmpty ? groupReading(group) : word
         }
-        return words.joined(separator: isMyNumber ? " " : "")
+        return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
     var body: some View {
@@ -92,8 +108,16 @@ struct ContentView: View {
                                 var tmp = ""
                                 for (i, c) in stripped.enumerated() {
                                     if digitCount == 11 {
-                                        // 電話番号モード: 3+4+4
+                                        // 携帯番号モード: 3+4+4
                                         if i == 3 || i == 7 { tmp.append(" ") }
+                                    } else if digitCount == 10 && stripped.hasPrefix("0") {
+                                        // 固定電話モード: 03/06→2+4+4, その他→3+3+4
+                                        let p2 = String(stripped.prefix(2))
+                                        if ["03", "06"].contains(p2) {
+                                            if i == 2 || i == 6 { tmp.append(" ") }
+                                        } else {
+                                            if i == 3 || i == 6 { tmp.append(" ") }
+                                        }
                                     } else {
                                         // デフォルト: 4桁ごと
                                         if i > 0 && i % 4 == 0 { tmp.append(" ") }
@@ -111,11 +135,18 @@ struct ContentView: View {
                             // モード別自動グループ設定
                             if !hasHyphen {
                                 if digitCount == 12 {
-                                    mergedGroups = [0: 4, 4: 4, 8: 4]  // マイナンバー
+                                    mergedGroups = [0: 4, 4: 4, 8: 4]         // マイナンバー
                                 } else if digitCount == 11 {
                                     let prefix = String(digits.prefix(3))
                                     if ["090", "080", "070"].contains(prefix) {
-                                        mergedGroups = [0: 3, 3: 4, 7: 4]  // 携帯番号
+                                        mergedGroups = [0: 3, 3: 4, 7: 4]     // 携帯番号
+                                    }
+                                } else if digitCount == 10 && digits.hasPrefix("0") {
+                                    let p2 = String(digits.prefix(2))
+                                    if ["03", "06"].contains(p2) {
+                                        mergedGroups = [0: 2, 2: 4, 6: 4]     // 固定電話(2+4+4)
+                                    } else {
+                                        mergedGroups = [0: 3, 3: 3, 6: 4]     // 固定電話(3+3+4)
                                     }
                                 }
                             }
@@ -158,6 +189,20 @@ struct ContentView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Color(red: 0.2, green: 0.7, blue: 0.4))
+                    .cornerRadius(20)
+                    .padding(.bottom, 8)
+                } else if isLandline {
+                    let p2 = String(inputNumber.filter { $0.isNumber }.prefix(2))
+                    let fmt = ["03", "06"].contains(p2) ? "2+4+4" : "3+3+4"
+                    HStack(spacing: 6) {
+                        Image(systemName: "phone.fill")
+                        Text("固定電話モード（\(fmt)）")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color(red: 0.4, green: 0.6, blue: 1.0))
                     .cornerRadius(20)
                     .padding(.bottom, 8)
                 }
