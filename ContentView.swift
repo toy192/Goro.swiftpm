@@ -30,7 +30,9 @@ struct ContentView: View {
 
     var isPhoneNumber: Bool {
         let digits = inputNumber.filter { $0.isNumber }
-        return digits.count == 11 && !inputNumber.contains("-")
+        guard digits.count == 11 && !inputNumber.contains("-") else { return false }
+        let prefix = String(digits.prefix(3))
+        return ["090", "080", "070"].contains(prefix)
     }
 
     var result: String {
@@ -111,7 +113,10 @@ struct ContentView: View {
                                 if digitCount == 12 {
                                     mergedGroups = [0: 4, 4: 4, 8: 4]  // マイナンバー
                                 } else if digitCount == 11 {
-                                    mergedGroups = [0: 3, 3: 4, 7: 4]  // 電話番号
+                                    let prefix = String(digits.prefix(3))
+                                    if ["090", "080", "070"].contains(prefix) {
+                                        mergedGroups = [0: 3, 3: 4, 7: 4]  // 携帯番号
+                                    }
                                 }
                             }
                         }
@@ -145,8 +150,8 @@ struct ContentView: View {
                     .padding(.bottom, 8)
                 } else if isPhoneNumber {
                     HStack(spacing: 6) {
-                        Image(systemName: "phone")
-                        Text("電話番号モード（3+4+4）")
+                        Image(systemName: "iphone")
+                        Text("携帯番号モード（3+4+4）")
                             .font(.system(size: 13, weight: .bold))
                     }
                     .foregroundColor(.black)
