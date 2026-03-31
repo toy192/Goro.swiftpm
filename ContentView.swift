@@ -28,6 +28,11 @@ struct ContentView: View {
         return digits.count == 12 && !inputNumber.contains("-")
     }
 
+    var isPhoneNumber: Bool {
+        let digits = inputNumber.filter { $0.isNumber }
+        return digits.count == 11 && !inputNumber.contains("-")
+    }
+
     var result: String {
         let words = groupItems.map { group in
             let word = customWords[group.id] ?? ""
@@ -76,12 +81,21 @@ struct ContentView: View {
                         .onChange(of: inputNumber) {
                             // 数字とハイフン以外を除去
                             let stripped = inputNumber.filter { $0.isNumber || $0 == "-" }
-                            // ハイフンなしの場合は4桁ごとにスペースを自動挿入
+                            let digits = stripped.filter { $0.isNumber }
+                            let digitCount = digits.count
+                            let hasHyphen = stripped.contains("-")
+                            // ハイフンなしの場合はモードに応じてスペースを自動挿入
                             let formatted: String
-                            if !stripped.contains("-") {
+                            if !hasHyphen {
                                 var tmp = ""
                                 for (i, c) in stripped.enumerated() {
-                                    if i > 0 && i % 4 == 0 { tmp.append(" ") }
+                                    if digitCount == 11 {
+                                        // 電話番号モード: 3+4+4
+                                        if i == 3 || i == 7 { tmp.append(" ") }
+                                    } else {
+                                        // デフォルト: 4桁ごと
+                                        if i > 0 && i % 4 == 0 { tmp.append(" ") }
+                                    }
                                     tmp.append(c)
                                 }
                                 formatted = tmp
@@ -92,10 +106,13 @@ struct ContentView: View {
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
-                            // マイナンバーモード: 12桁で自動4+4+4分割
-                            let digits = stripped.filter { $0.isNumber }
-                            if digits.count == 12 && !stripped.contains("-") {
-                                mergedGroups = [0: 4, 4: 4, 8: 4]
+                            // モード別自動グループ設定
+                            if !hasHyphen {
+                                if digitCount == 12 {
+                                    mergedGroups = [0: 4, 4: 4, 8: 4]  // マイナンバー
+                                } else if digitCount == 11 {
+                                    mergedGroups = [0: 3, 3: 4, 7: 4]  // 電話番号
+                                }
                             }
                         }
 
@@ -117,13 +134,25 @@ struct ContentView: View {
                 if isMyNumber {
                     HStack(spacing: 6) {
                         Image(systemName: "person.text.rectangle")
-                        Text("マイナンバーモード（4桁区切り）")
+                        Text("マイナンバーモード（4+4+4）")
                             .font(.system(size: 13, weight: .bold))
                     }
                     .foregroundColor(.black)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Color.orange)
+                    .cornerRadius(20)
+                    .padding(.bottom, 8)
+                } else if isPhoneNumber {
+                    HStack(spacing: 6) {
+                        Image(systemName: "phone")
+                        Text("電話番号モード（3+4+4）")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color(red: 0.2, green: 0.7, blue: 0.4))
                     .cornerRadius(20)
                     .padding(.bottom, 8)
                 }
