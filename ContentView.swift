@@ -23,11 +23,17 @@ struct ContentView: View {
         }.joined()
     }
 
+    var isMyNumber: Bool {
+        let digits = inputNumber.filter { $0.isNumber }
+        return digits.count == 12 && !inputNumber.contains("-")
+    }
+
     var result: String {
-        groupItems.map { group in
+        let words = groupItems.map { group in
             let word = customWords[group.id] ?? ""
             return word.isEmpty ? groupReading(group) : word
-        }.joined()
+        }
+        return words.joined(separator: isMyNumber ? " " : "")
     }
 
     var body: some View {
@@ -75,6 +81,11 @@ struct ContentView: View {
                             mergedGroups = [:]
                             selectedReadings = [:]
                             customWords = [:]
+                            // マイナンバーモード: 12桁で自動4+4+4分割
+                            let digits = filtered.filter { $0.isNumber }
+                            if digits.count == 12 && !filtered.contains("-") {
+                                mergedGroups = [0: 4, 4: 4, 8: 4]
+                            }
                         }
 
                     if !inputNumber.isEmpty {
@@ -91,6 +102,20 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+
+                if isMyNumber {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.text.rectangle")
+                        Text("マイナンバーモード（4桁区切り）")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.orange)
+                    .cornerRadius(20)
+                    .padding(.bottom, 8)
+                }
 
                 if groupItems.isEmpty {
                     Spacer()
