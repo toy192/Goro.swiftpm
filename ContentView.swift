@@ -1,5 +1,4 @@
 import SwiftUI
-import CryptoKit
 
 struct ContentView: View {
     @StateObject private var historyStore = HistoryStore()
@@ -12,7 +11,7 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var showingResistor = false
-    @State private var showingMD5 = false
+    @State private var showingBase493 = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -55,18 +54,23 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
-    var shortHashString: String {
-        let target = inputNumber.filter { $0.isNumber || $0 == "-" }
-        guard !target.isEmpty else { return "" }
-        let digest = SHA256.hash(data: Data(target.utf8))
-        return baseEncode(bytes: Array(digest.prefix(5)))
-    }
-
-    var shortHashHex: String {
-        let target = inputNumber.filter { $0.isNumber || $0 == "-" }
-        guard !target.isEmpty else { return "" }
-        return SHA256.hash(data: Data(target.utf8))
-            .prefix(7).map { String(format: "%02x", $0) }.joined()
+    var numberBase493: String {
+        let digits = inputNumber.filter { $0.isNumber }
+        guard !digits.isEmpty else { return "" }
+        // 先頭ゼロを保持: 各先頭ゼロをアルファベット[0]('0')で表現
+        let leadingZeroCount = digits.prefix(while: { $0 == "0" }).count
+        let leadingPrefix = String(repeating: String(shortHashAlphabet[0]), count: leadingZeroCount)
+        let rest = String(digits.drop(while: { $0 == "0" }))
+        guard !rest.isEmpty else { return leadingPrefix }
+        guard let value = UInt64(rest) else { return "" }
+        let base = UInt64(shortHashAlphabet.count)
+        var n = value
+        var result: [Character] = []
+        while n > 0 {
+            result.append(shortHashAlphabet[Int(n % base)])
+            n /= base
+        }
+        return leadingPrefix + String(result.reversed())
     }
 
     var body: some View {
@@ -80,10 +84,10 @@ struct ContentView: View {
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
                     Button {
-                        showingMD5.toggle()
+                        showingBase493.toggle()
                     } label: {
-                        Text("MD5")
-                            .foregroundColor(showingMD5 ? .orange : Color(white: 0.6))
+                        Text("B493")
+                            .foregroundColor(showingBase493 ? .orange : Color(white: 0.6))
                             .font(.system(size: 14, weight: .bold))
                     }
                     Button {
@@ -226,19 +230,16 @@ struct ContentView: View {
                     .padding(.vertical, 8)
                 }
 
-                if showingMD5 && !inputNumber.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("SHA256(40bit) base\(shortHashAlphabet.count):")
+                if showingBase493 && !inputNumber.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        let digits = inputNumber.filter { $0.isNumber }
+                        Text("base\(shortHashAlphabet.count)変換（可逆）: \(digits.count)桁 → \(numberBase493.count)文字")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
-                        Text(shortHashString)
+                        Text(numberBase493)
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.orange)
-                            .padding(.horizontal, 16)
-                        Text("SHA256: \(shortHashHex)...")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(Color(white: 0.35))
                             .padding(.horizontal, 16)
                     }
                     .padding(.vertical, 8)
