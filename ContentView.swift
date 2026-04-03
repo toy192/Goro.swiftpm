@@ -55,18 +55,18 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
-    var md5Base1024: [Int] {
+    var shortHashString: String {
         let target = inputNumber.filter { $0.isNumber || $0 == "-" }
-        guard !target.isEmpty else { return [] }
-        let digest = Insecure.MD5.hash(data: Data(target.utf8))
-        var bits: [UInt8] = []
-        for byte in digest {
-            for i in (0..<8).reversed() { bits.append((byte >> i) & 1) }
-        }
-        while bits.count % 10 != 0 { bits.append(0) } // pad to 130 bits
-        return stride(from: 0, to: bits.count, by: 10).map { i in
-            bits[i..<i+10].reduce(0) { $0 * 2 + Int($1) }
-        }
+        guard !target.isEmpty else { return "" }
+        let digest = SHA256.hash(data: Data(target.utf8))
+        return baseEncode(bytes: Array(digest.prefix(8)))
+    }
+
+    var shortHashHex: String {
+        let target = inputNumber.filter { $0.isNumber || $0 == "-" }
+        guard !target.isEmpty else { return "" }
+        return SHA256.hash(data: Data(target.utf8))
+            .prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 
     var body: some View {
@@ -228,35 +228,18 @@ struct ContentView: View {
 
                 if showingMD5 && !inputNumber.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        let hexStr = Insecure.MD5.hash(data: Data(inputNumber.filter { $0.isNumber || $0 == "-" }.utf8))
-                            .map { String(format: "%02x", $0) }.joined()
-                        Text("MD5: \(hexStr)")
-                            .font(.system(size: 11, design: .monospaced))
+                        Text("SHA256(64bit) base\(shortHashAlphabet.count):")
+                            .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(Array(md5Base1024.enumerated()), id: \.offset) { i, val in
-                                    VStack(spacing: 2) {
-                                        Text("\(val)")
-                                            .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                            .foregroundColor(.white)
-                                            .frame(minWidth: 40)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 4)
-                                            .background(Color(white: 0.18))
-                                            .cornerRadius(6)
-                                        let key = String(val)
-                                        if let s = GoroModel.suggestions[key], !s.isEmpty {
-                                            Text(s.first ?? "")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(.orange)
-                                        }
-                                    }
-                                }
-                            }
+                        Text(shortHashString)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.orange)
                             .padding(.horizontal, 16)
-                        }
+                        Text("SHA256: \(shortHashHex)...")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(Color(white: 0.35))
+                            .padding(.horizontal, 16)
                     }
                     .padding(.vertical, 8)
                 }
@@ -508,6 +491,34 @@ struct MergeButton: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 4)
     }
+}
+
+// MARK: - 短縮ハッシュ (base154)
+
+private let shortHashAlphabet: [Character] = Array(
+    "0123456789" +
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
+    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
+    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"
+) // 10+52+46+46 = 154文字
+
+private func baseEncode(bytes: [UInt8]) -> String {
+    let base = shortHashAlphabet.count
+    var digits = [Int]()
+    for byte in bytes {
+        var carry = Int(byte)
+        for i in 0..<digits.count {
+            carry += digits[i] << 8
+            digits[i] = carry % base
+            carry /= base
+        }
+        while carry > 0 {
+            digits.append(carry % base)
+            carry /= base
+        }
+    }
+    if digits.isEmpty { digits.append(0) }
+    return String(digits.reversed().map { shortHashAlphabet[$0] })
 }
 
 // MARK: - 抵抗器カラーコード
