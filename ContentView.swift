@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 
 struct ContentView: View {
     @StateObject private var historyStore = HistoryStore()
@@ -11,6 +12,7 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var showingResistor = false
+    @State private var showingMD5 = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -53,6 +55,20 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
+    var md5Base1024: [Int] {
+        let target = inputNumber.filter { $0.isNumber || $0 == "-" }
+        guard !target.isEmpty else { return [] }
+        let digest = Insecure.MD5.hash(data: Data(target.utf8))
+        var bits: [UInt8] = []
+        for byte in digest {
+            for i in (0..<8).reversed() { bits.append((byte >> i) & 1) }
+        }
+        while bits.count % 10 != 0 { bits.append(0) } // pad to 130 bits
+        return stride(from: 0, to: bits.count, by: 10).map { i in
+            bits[i..<i+10].reduce(0) { $0 * 2 + Int($1) }
+        }
+    }
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -63,6 +79,13 @@ struct ContentView: View {
                         .foregroundColor(.orange)
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
+                    Button {
+                        showingMD5.toggle()
+                    } label: {
+                        Text("MD5")
+                            .foregroundColor(showingMD5 ? .orange : Color(white: 0.6))
+                            .font(.system(size: 14, weight: .bold))
+                    }
                     Button {
                         showingResistor.toggle()
                     } label: {
@@ -163,6 +186,7 @@ struct ContentView: View {
                     let groups = stride(from: 0, to: numericDigits.count, by: 4).map {
                         Array(numericDigits[$0..<min($0 + 4, numericDigits.count)])
                     }
+                    let total = groups.compactMap { resistorRawValue(digits: $0) }.reduce(0, +)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 16) {
                             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
@@ -184,8 +208,55 @@ struct ContentView: View {
                                     }
                                 }
                             }
+                            if groups.filter({ $0.count >= 3 }).count > 1 {
+                                VStack(spacing: 4) {
+                                    Text("合計")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(white: 0.5))
+                                    Text(formatResistance(total))
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.yellow)
+                                }
+                                .padding(.leading, 4)
+                                .frame(height: 48 + 4 + 16, alignment: .bottom)
+                            }
                         }
                         .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                if showingMD5 && !inputNumber.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        let hexStr = Insecure.MD5.hash(data: Data(inputNumber.filter { $0.isNumber || $0 == "-" }.utf8))
+                            .map { String(format: "%02x", $0) }.joined()
+                        Text("MD5: \(hexStr)")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(Color(white: 0.5))
+                            .padding(.horizontal, 16)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(Array(md5Base1024.enumerated()), id: \.offset) { i, val in
+                                    VStack(spacing: 2) {
+                                        Text("\(val)")
+                                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                            .foregroundColor(.white)
+                                            .frame(minWidth: 40)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 4)
+                                            .background(Color(white: 0.18))
+                                            .cornerRadius(6)
+                                        let key = String(val)
+                                        if let s = GoroModel.suggestions[key], !s.isEmpty {
+                                            Text(s.first ?? "")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.orange)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                        }
                     }
                     .padding(.vertical, 8)
                 }
@@ -464,18 +535,26 @@ private func resistorTextColor(for digit: Character) -> Color {
     }
 }
 
-private func resistorValue(digits: [Character]) -> String {
+private func resistorRawValue(digits: [Character]) -> Double? {
     guard digits.count >= 3,
           let d1 = digits[0].wholeNumberValue,
           let d2 = digits[1].wholeNumberValue,
-          let d3 = digits[2].wholeNumberValue else { return "" }
-    let value = Double(d1 * 10 + d2) * pow(10.0, Double(d3))
+          let d3 = digits[2].wholeNumberValue else { return nil }
+    return Double(d1 * 10 + d2) * pow(10.0, Double(d3))
+}
+
+private func formatResistance(_ value: Double) -> String {
     switch value {
     case 1_000_000_000...: return String(format: "%.3gGΩ", value / 1_000_000_000)
     case 1_000_000...:     return String(format: "%.3gMΩ", value / 1_000_000)
     case 1_000...:         return String(format: "%.3gkΩ", value / 1_000)
     default:               return String(format: "%.3gΩ",  value)
     }
+}
+
+private func resistorValue(digits: [Character]) -> String {
+    guard let value = resistorRawValue(digits: digits) else { return "" }
+    return formatResistance(value)
 }
 
 // MARK: - グループ行
