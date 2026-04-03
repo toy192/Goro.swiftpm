@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var saved = false
     @State private var showingHistory = false
     @State private var showingHelp = false
+    @State private var showingResistor = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -62,6 +63,13 @@ struct ContentView: View {
                         .foregroundColor(.orange)
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
+                    Button {
+                        showingResistor.toggle()
+                    } label: {
+                        Text("Ω")
+                            .foregroundColor(showingResistor ? .orange : Color(white: 0.6))
+                            .font(.system(size: 22, weight: .bold))
+                    }
                     Button {
                         showingHelp = true
                     } label: {
@@ -149,6 +157,22 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+
+                if showingResistor && !inputNumber.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 3) {
+                            ForEach(Array(inputNumber.filter { $0.isNumber || $0 == "-" }.enumerated()), id: \.offset) { _, digit in
+                                Text(String(digit))
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(digit == "-" ? .white : resistorTextColor(for: digit))
+                                    .frame(width: 32, height: 48)
+                                    .background(digit == "-" ? Color(white: 0.3) : resistorColor(for: digit))
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 8)
+                }
 
                 if isMyNumber {
                     HStack(spacing: 6) {
