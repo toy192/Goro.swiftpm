@@ -399,6 +399,31 @@ struct MergeButton: View {
     }
 }
 
+// MARK: - 抵抗器カラーコード
+
+private func resistorColor(for digit: Character) -> Color {
+    switch digit {
+    case "0": return Color(white: 0.08)           // 黒
+    case "1": return Color(red: 0.45, green: 0.22, blue: 0.05) // 茶
+    case "2": return Color(red: 0.85, green: 0.1, blue: 0.1)   // 赤
+    case "3": return Color(red: 1.0, green: 0.5, blue: 0.0)    // 橙
+    case "4": return Color(red: 1.0, green: 0.85, blue: 0.0)   // 黄
+    case "5": return Color(red: 0.1, green: 0.65, blue: 0.1)   // 緑
+    case "6": return Color(red: 0.1, green: 0.2, blue: 0.9)    // 青
+    case "7": return Color(red: 0.5, green: 0.0, blue: 0.8)    // 紫
+    case "8": return Color(white: 0.55)            // 灰
+    case "9": return Color.white                   // 白
+    default:  return Color(white: 0.3)
+    }
+}
+
+private func resistorTextColor(for digit: Character) -> Color {
+    switch digit {
+    case "3", "4", "9": return .black
+    default: return .white
+    }
+}
+
 // MARK: - グループ行
 
 struct GroupRowView: View {
@@ -429,8 +454,10 @@ struct GroupRowView: View {
                             Text(String(digit))
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.orange)
-                                .frame(width: 28)
+                                .foregroundColor(digit == "-" ? .white : resistorTextColor(for: digit))
+                                .frame(width: 34, height: 34)
+                                .background(digit == "-" ? Color(white: 0.3) : resistorColor(for: digit))
+                                .cornerRadius(6)
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
