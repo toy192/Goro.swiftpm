@@ -159,14 +159,30 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
 
                 if showingResistor && !inputNumber.isEmpty {
+                    let numericDigits = Array(inputNumber.filter { $0.isNumber })
+                    let groups = stride(from: 0, to: numericDigits.count, by: 4).map {
+                        Array(numericDigits[$0..<min($0 + 4, numericDigits.count)])
+                    }
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 3) {
-                            ForEach(Array(inputNumber.filter { $0.isNumber || $0 == "-" }.enumerated()), id: \.offset) { _, digit in
-                                Text(String(digit))
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(digit == "-" ? .white : resistorTextColor(for: digit))
-                                    .frame(width: 32, height: 48)
-                                    .background(digit == "-" ? Color(white: 0.3) : resistorColor(for: digit))
+                        HStack(alignment: .top, spacing: 16) {
+                            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                                VStack(spacing: 4) {
+                                    HStack(spacing: 3) {
+                                        ForEach(Array(group.enumerated()), id: \.offset) { _, digit in
+                                            Text(String(digit))
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(resistorTextColor(for: digit))
+                                                .frame(width: 32, height: 48)
+                                                .background(resistorColor(for: digit))
+                                        }
+                                    }
+                                    .cornerRadius(4)
+                                    if group.count >= 3 {
+                                        Text(resistorValue(digits: group))
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.orange)
+                                    }
+                                }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -445,6 +461,20 @@ private func resistorTextColor(for digit: Character) -> Color {
     switch digit {
     case "3", "4", "9": return .black
     default: return .white
+    }
+}
+
+private func resistorValue(digits: [Character]) -> String {
+    guard digits.count >= 3,
+          let d1 = digits[0].wholeNumberValue,
+          let d2 = digits[1].wholeNumberValue,
+          let d3 = digits[2].wholeNumberValue else { return "" }
+    let value = Double(d1 * 10 + d2) * pow(10.0, Double(d3))
+    switch value {
+    case 1_000_000_000...: return String(format: "%.3gGΩ", value / 1_000_000_000)
+    case 1_000_000...:     return String(format: "%.3gMΩ", value / 1_000_000)
+    case 1_000...:         return String(format: "%.3gkΩ", value / 1_000)
+    default:               return String(format: "%.3gΩ",  value)
     }
 }
 
