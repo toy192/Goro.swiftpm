@@ -59,14 +59,14 @@ struct ContentView: View {
         let target = inputNumber.filter { $0.isNumber || $0 == "-" }
         guard !target.isEmpty else { return "" }
         let digest = SHA256.hash(data: Data(target.utf8))
-        return baseEncode(bytes: Array(digest.prefix(8)))
+        return baseEncode(bytes: Array(digest.prefix(7)))
     }
 
     var shortHashHex: String {
         let target = inputNumber.filter { $0.isNumber || $0 == "-" }
         guard !target.isEmpty else { return "" }
         return SHA256.hash(data: Data(target.utf8))
-            .prefix(8).map { String(format: "%02x", $0) }.joined()
+            .prefix(7).map { String(format: "%02x", $0) }.joined()
     }
 
     var body: some View {
@@ -228,7 +228,7 @@ struct ContentView: View {
 
                 if showingMD5 && !inputNumber.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("SHA256(64bit) base\(shortHashAlphabet.count):")
+                        Text("SHA256(56bit) base\(shortHashAlphabet.count):")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
@@ -493,14 +493,22 @@ struct MergeButton: View {
     }
 }
 
-// MARK: - 短縮ハッシュ (base154)
+// MARK: - 短縮ハッシュ (base222)
 
 private let shortHashAlphabet: [Character] = Array(
     "0123456789" +
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
+    // ひらがな: 基本46 + 小文字9 + 濁音20 + 半濁音5 = 80
     "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
-    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"
-) // 10+52+46+46 = 154文字
+    "ぁぃぅぇぉっゃゅょ" +
+    "がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
+    "ぱぴぷぺぽ" +
+    // カタカナ: 基本46 + 小文字9 + 濁音20 + 半濁音5 = 80
+    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
+    "ァィゥェォッャュョ" +
+    "ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
+    "パピプペポ"
+) // 10+52+80+80 = 222文字
 
 private func baseEncode(bytes: [UInt8]) -> String {
     let base = shortHashAlphabet.count
