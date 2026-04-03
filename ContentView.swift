@@ -59,7 +59,7 @@ struct ContentView: View {
         let target = inputNumber.filter { $0.isNumber || $0 == "-" }
         guard !target.isEmpty else { return "" }
         let digest = SHA256.hash(data: Data(target.utf8))
-        return baseEncode(bytes: Array(digest.prefix(7)))
+        return baseEncode(bytes: Array(digest.prefix(6)))
     }
 
     var shortHashHex: String {
@@ -228,7 +228,7 @@ struct ContentView: View {
 
                 if showingMD5 && !inputNumber.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("SHA256(56bit) base\(shortHashAlphabet.count):")
+                        Text("SHA256(48bit) base\(shortHashAlphabet.count):")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
@@ -493,7 +493,7 @@ struct MergeButton: View {
     }
 }
 
-// MARK: - 短縮ハッシュ (base270)
+// MARK: - 短縮ハッシュ (base346)
 
 private let shortHashAlphabet: [Character] = Array(
     "0123456789" +
@@ -510,8 +510,13 @@ private let shortHashAlphabet: [Character] = Array(
     "パピプペポ" +
     // ギリシャ文字: 大文字24 + 小文字24 = 48
     "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ" +
-    "αβγδεζηθικλμνξοπρστυφχψω"
-) // 10+52+80+80+48 = 270文字
+    "αβγδεζηθικλμνξοπρστυφχψω" +
+    // キリル文字: 大文字33 + 小文字33 = 66
+    "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" +
+    "абвгдежзийклмнопрстуфхцчшщъыьэюя" +
+    // 東アラビア数字: ٠١٢٣٤٥٦٧٨٩ = 10
+    "٠١٢٣٤٥٦٧٨٩"
+) // 10+52+80+80+48+66+10 = 346文字
 
 private func baseEncode(bytes: [UInt8]) -> String {
     let base = shortHashAlphabet.count
