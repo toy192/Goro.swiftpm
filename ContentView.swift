@@ -493,7 +493,7 @@ struct MergeButton: View {
     }
 }
 
-// MARK: - 短縮ハッシュ (base222)
+// MARK: - 短縮ハッシュ (base270)
 
 private let shortHashAlphabet: [Character] = Array(
     "0123456789" +
@@ -507,8 +507,11 @@ private let shortHashAlphabet: [Character] = Array(
     "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
     "ァィゥェォッャュョ" +
     "ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
-    "パピプペポ"
-) // 10+52+80+80 = 222文字
+    "パピプペポ" +
+    // ギリシャ文字: 大文字24 + 小文字24 = 48
+    "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ" +
+    "αβγδεζηθικλμνξοπρστυφχψω"
+) // 10+52+80+80+48 = 270文字
 
 private func baseEncode(bytes: [UInt8]) -> String {
     let base = shortHashAlphabet.count
