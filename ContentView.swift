@@ -163,6 +163,7 @@ struct ContentView: View {
                     let groups = stride(from: 0, to: numericDigits.count, by: 4).map {
                         Array(numericDigits[$0..<min($0 + 4, numericDigits.count)])
                     }
+                    let total = groups.compactMap { resistorRawValue(digits: $0) }.reduce(0, +)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 16) {
                             ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
@@ -183,6 +184,18 @@ struct ContentView: View {
                                             .foregroundColor(.orange)
                                     }
                                 }
+                            }
+                            if groups.filter({ $0.count >= 3 }).count > 1 {
+                                VStack(spacing: 4) {
+                                    Text("合計")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(white: 0.5))
+                                    Text(formatResistance(total))
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.yellow)
+                                }
+                                .padding(.leading, 4)
+                                .frame(height: 48 + 4 + 16, alignment: .bottom)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -464,18 +477,26 @@ private func resistorTextColor(for digit: Character) -> Color {
     }
 }
 
-private func resistorValue(digits: [Character]) -> String {
+private func resistorRawValue(digits: [Character]) -> Double? {
     guard digits.count >= 3,
           let d1 = digits[0].wholeNumberValue,
           let d2 = digits[1].wholeNumberValue,
-          let d3 = digits[2].wholeNumberValue else { return "" }
-    let value = Double(d1 * 10 + d2) * pow(10.0, Double(d3))
+          let d3 = digits[2].wholeNumberValue else { return nil }
+    return Double(d1 * 10 + d2) * pow(10.0, Double(d3))
+}
+
+private func formatResistance(_ value: Double) -> String {
     switch value {
     case 1_000_000_000...: return String(format: "%.3gGΩ", value / 1_000_000_000)
     case 1_000_000...:     return String(format: "%.3gMΩ", value / 1_000_000)
     case 1_000...:         return String(format: "%.3gkΩ", value / 1_000)
     default:               return String(format: "%.3gΩ",  value)
     }
+}
+
+private func resistorValue(digits: [Character]) -> String {
+    guard let value = resistorRawValue(digits: digits) else { return "" }
+    return formatResistance(value)
 }
 
 // MARK: - グループ行
