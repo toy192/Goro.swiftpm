@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var showingResistor = false
+    @State private var showingBase128 = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -53,6 +54,24 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
+    var numberBase128: String {
+        let digits = inputNumber.filter { $0.isNumber }
+        guard !digits.isEmpty else { return "" }
+        let leadingZeroCount = digits.prefix(while: { $0 == "0" }).count
+        let leadingPrefix = String(repeating: String(base128Alphabet[0]), count: leadingZeroCount)
+        let rest = String(digits.drop(while: { $0 == "0" }))
+        guard !rest.isEmpty else { return leadingPrefix }
+        guard let value = UInt64(rest) else { return "" }
+        let base = UInt64(base128Alphabet.count)
+        var n = value
+        var result: [Character] = []
+        while n > 0 {
+            result.append(base128Alphabet[Int(n % base)])
+            n /= base
+        }
+        return leadingPrefix + String(result.reversed())
+    }
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -63,6 +82,13 @@ struct ContentView: View {
                         .foregroundColor(.orange)
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
+                    Button {
+                        showingBase128.toggle()
+                    } label: {
+                        Text("B128")
+                            .foregroundColor(showingBase128 ? .cyan : Color(white: 0.6))
+                            .font(.system(size: 14, weight: .bold))
+                    }
                     Button {
                         showingResistor.toggle()
                     } label: {
@@ -199,6 +225,21 @@ struct ContentView: View {
                             }
                         }
                         .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                if showingBase128 && !inputNumber.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        let digits = inputNumber.filter { $0.isNumber }
+                        Text("base128変換（可逆）: \(digits.count)桁 → \(numberBase128.count)文字")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(white: 0.5))
+                            .padding(.horizontal, 16)
+                        Text(numberBase128)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.cyan)
+                            .padding(.horizontal, 16)
                     }
                     .padding(.vertical, 8)
                 }
@@ -451,6 +492,16 @@ struct MergeButton: View {
         .padding(.vertical, 4)
     }
 }
+
+// MARK: - base128アルファベット
+
+// 数字10 + 大文字26 + 小文字26 + 基本ひらがな46 + 濁音ひらがな20 = 128文字
+private let base128Alphabet: [Character] = Array(
+    "0123456789" +
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
+    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
+    "がぎぐげござじずぜぞだぢづでどばびぶべぼ"
+)
 
 // MARK: - 抵抗器カラーコード
 
