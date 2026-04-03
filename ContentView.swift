@@ -59,7 +59,7 @@ struct ContentView: View {
         let target = inputNumber.filter { $0.isNumber || $0 == "-" }
         guard !target.isEmpty else { return "" }
         let digest = SHA256.hash(data: Data(target.utf8))
-        return baseEncode(bytes: Array(digest.prefix(6)))
+        return baseEncode(bytes: Array(digest.prefix(5)))
     }
 
     var shortHashHex: String {
@@ -228,7 +228,7 @@ struct ContentView: View {
 
                 if showingMD5 && !inputNumber.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("SHA256(48bit) base\(shortHashAlphabet.count):")
+                        Text("SHA256(40bit) base\(shortHashAlphabet.count):")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
@@ -493,7 +493,7 @@ struct MergeButton: View {
     }
 }
 
-// MARK: - 短縮ハッシュ (base346)
+// MARK: - 短縮ハッシュ (base493)
 
 private let shortHashAlphabet: [Character] = Array(
     "0123456789" +
@@ -515,8 +515,15 @@ private let shortHashAlphabet: [Character] = Array(
     "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" +
     "абвгдежзийклмнопрстуфхцчшщъыьэюя" +
     // 東アラビア数字: ٠١٢٣٤٥٦٧٨٩ = 10
-    "٠١٢٣٤٥٦٧٨٩"
-) // 10+52+80+80+48+66+10 = 346文字
+    "٠١٢٣٤٥٦٧٨٩" +
+    // 小学1年漢字: 80
+    "一右雨円王音下火花貝学気九休玉金空月犬見五口校左三山子四糸字耳七車手十出女小上森人水正生青夕石赤千川先早草足村大男竹中虫町天田土二日入年白八百文木本名目立力林六" +
+    // ヘブライ文字: 基本22 + 語末形5 = 27
+    "אבגדהוזחטיכלמנסעפצקרשתךםןףץ" +
+    // ハングル字母: 子音19 + 母音21 = 40
+    "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅃㅆㅉ" +
+    "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
+) // 10+52+80+80+48+66+10+80+27+40 = 493文字
 
 private func baseEncode(bytes: [UInt8]) -> String {
     let base = shortHashAlphabet.count
