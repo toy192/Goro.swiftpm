@@ -11,7 +11,6 @@ struct ContentView: View {
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var showingResistor = false
-    @State private var showingBase493 = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -54,25 +53,6 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
-    var numberBase493: String {
-        let digits = inputNumber.filter { $0.isNumber }
-        guard !digits.isEmpty else { return "" }
-        // 先頭ゼロを保持: 各先頭ゼロをアルファベット[0]('0')で表現
-        let leadingZeroCount = digits.prefix(while: { $0 == "0" }).count
-        let leadingPrefix = String(repeating: String(shortHashAlphabet[0]), count: leadingZeroCount)
-        let rest = String(digits.drop(while: { $0 == "0" }))
-        guard !rest.isEmpty else { return leadingPrefix }
-        guard let value = UInt64(rest) else { return "" }
-        let base = UInt64(shortHashAlphabet.count)
-        var n = value
-        var result: [Character] = []
-        while n > 0 {
-            result.append(shortHashAlphabet[Int(n % base)])
-            n /= base
-        }
-        return leadingPrefix + String(result.reversed())
-    }
-
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -83,13 +63,6 @@ struct ContentView: View {
                         .foregroundColor(.orange)
                         .font(.system(size: 24, weight: .bold))
                     Spacer()
-                    Button {
-                        showingBase493.toggle()
-                    } label: {
-                        Text("B493")
-                            .foregroundColor(showingBase493 ? .orange : Color(white: 0.6))
-                            .font(.system(size: 14, weight: .bold))
-                    }
                     Button {
                         showingResistor.toggle()
                     } label: {
@@ -226,21 +199,6 @@ struct ContentView: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                    }
-                    .padding(.vertical, 8)
-                }
-
-                if showingBase493 && !inputNumber.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        let digits = inputNumber.filter { $0.isNumber }
-                        Text("base\(shortHashAlphabet.count)変換（可逆）: \(digits.count)桁 → \(numberBase493.count)文字")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color(white: 0.5))
-                            .padding(.horizontal, 16)
-                        Text(numberBase493)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 16)
                     }
                     .padding(.vertical, 8)
                 }
@@ -492,57 +450,6 @@ struct MergeButton: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 4)
     }
-}
-
-// MARK: - 短縮ハッシュ (base493)
-
-private let shortHashAlphabet: [Character] = Array(
-    "0123456789" +
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
-    // ひらがな: 基本46 + 小文字9 + 濁音20 + 半濁音5 = 80
-    "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
-    "ぁぃぅぇぉっゃゅょ" +
-    "がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
-    "ぱぴぷぺぽ" +
-    // カタカナ: 基本46 + 小文字9 + 濁音20 + 半濁音5 = 80
-    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
-    "ァィゥェォッャュョ" +
-    "ガギグゲゴザジズゼゾダヂヅデドバビブベボ" +
-    "パピプペポ" +
-    // ギリシャ文字: 大文字24 + 小文字24 = 48
-    "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ" +
-    "αβγδεζηθικλμνξοπρστυφχψω" +
-    // キリル文字: 大文字33 + 小文字33 = 66
-    "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" +
-    "абвгдежзийклмнопрстуфхцчшщъыьэюя" +
-    // 東アラビア数字: ٠١٢٣٤٥٦٧٨٩ = 10
-    "٠١٢٣٤٥٦٧٨٩" +
-    // 小学1年漢字: 80
-    "一右雨円王音下火花貝学気九休玉金空月犬見五口校左三山子四糸字耳七車手十出女小上森人水正生青夕石赤千川先早草足村大男竹中虫町天田土二日入年白八百文木本名目立力林六" +
-    // ヘブライ文字: 基本22 + 語末形5 = 27
-    "אבגדהוזחטיכלמנסעפצקרשתךםןףץ" +
-    // ハングル字母: 子音19 + 母音21 = 40
-    "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅃㅆㅉ" +
-    "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
-) // 10+52+80+80+48+66+10+80+27+40 = 493文字
-
-private func baseEncode(bytes: [UInt8]) -> String {
-    let base = shortHashAlphabet.count
-    var digits = [Int]()
-    for byte in bytes {
-        var carry = Int(byte)
-        for i in 0..<digits.count {
-            carry += digits[i] << 8
-            digits[i] = carry % base
-            carry /= base
-        }
-        while carry > 0 {
-            digits.append(carry % base)
-            carry /= base
-        }
-    }
-    if digits.isEmpty { digits.append(0) }
-    return String(digits.reversed().map { shortHashAlphabet[$0] })
 }
 
 // MARK: - 抵抗器カラーコード
