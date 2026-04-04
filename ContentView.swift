@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var showingBase128 = false
     @State private var copiedBase = false
     @State private var copiedBaseReversed = false
+    @State private var inputKanji = ""
+    @State private var copiedBaseDecode = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -61,6 +63,28 @@ struct ContentView: View {
     var numberBase128Reversed: String {
         let digits = inputNumber.filter { $0.isNumber }
         return baseConvert(String(digits.reversed()))
+    }
+
+    var baseDecodeResult: String { baseDecode(inputKanji) }
+
+    private func baseDecode(_ text: String) -> String {
+        guard !text.isEmpty else { return "" }
+        let alphabetIndex = Dictionary(uniqueKeysWithValues: base128Alphabet.enumerated().map { ($1, $0) })
+        let zeroChar = base128Alphabet[0]
+        let leadingZeroCount = text.prefix(while: { $0 == zeroChar }).count
+        let rest = String(text.drop(while: { $0 == zeroChar }))
+        guard !rest.isEmpty else { return String(repeating: "0", count: leadingZeroCount) }
+        let base = UInt64(base128Alphabet.count)
+        var value: UInt64 = 0
+        for char in rest {
+            guard let idx = alphabetIndex[char] else { return "?" }
+            let (mul, ov1) = value.multipliedReportingOverflow(by: base)
+            if ov1 { return "桁数超過" }
+            let (add, ov2) = mul.addingReportingOverflow(UInt64(idx))
+            if ov2 { return "桁数超過" }
+            value = add
+        }
+        return String(repeating: "0", count: leadingZeroCount) + String(value)
     }
 
     private func baseConvert(_ digits: String) -> String {
@@ -280,6 +304,50 @@ struct ContentView: View {
                                     .foregroundColor(copiedBaseReversed ? .green : .teal)
                             }
                             .padding(.trailing, 16)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                if showingBase128 {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("逆変換（漢字→数字）")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(white: 0.5))
+                            .padding(.horizontal, 16)
+                        HStack(spacing: 8) {
+                            TextField("漢字・かなを入力...", text: $inputKanji)
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .padding(10)
+                                .background(Color(white: 0.15))
+                                .cornerRadius(10)
+                                .padding(.leading, 16)
+                            if !inputKanji.isEmpty {
+                                Button { inputKanji = "" } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(Color(white: 0.5))
+                                }
+                                .padding(.trailing, 16)
+                            }
+                        }
+                        if !inputKanji.isEmpty {
+                            HStack(alignment: .bottom) {
+                                Text(baseDecodeResult)
+                                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                                    .foregroundColor(.yellow)
+                                    .padding(.leading, 16)
+                                Spacer()
+                                Button {
+                                    UIPasteboard.general.string = baseDecodeResult
+                                    copiedBaseDecode = true
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copiedBaseDecode = false }
+                                } label: {
+                                    Image(systemName: copiedBaseDecode ? "checkmark" : "doc.on.doc")
+                                        .foregroundColor(copiedBaseDecode ? .green : .yellow)
+                                }
+                                .padding(.trailing, 16)
+                            }
                         }
                     }
                     .padding(.vertical, 8)
