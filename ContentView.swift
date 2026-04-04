@@ -246,17 +246,15 @@ struct ContentView: View {
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.cyan)
                             .padding(.horizontal, 16)
-                        if isPhoneNumber {
-                            Text("逆順: \(String(digits.reversed()))")
-                                .font(.system(size: 11))
-                                .foregroundColor(Color(white: 0.5))
-                                .padding(.horizontal, 16)
-                                .padding(.top, 4)
-                            Text(numberBase128Reversed)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(.teal)
-                                .padding(.horizontal, 16)
-                        }
+                        Text("逆順: \(String(digits.reversed()))")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(white: 0.5))
+                            .padding(.horizontal, 16)
+                            .padding(.top, 4)
+                        Text(numberBase128Reversed)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.teal)
+                            .padding(.horizontal, 16)
                     }
                     .padding(.vertical, 8)
                 }
