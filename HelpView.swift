@@ -42,10 +42,12 @@ struct HelpView: View {
                         HelpRow(icon: "star", text: "例：1＋4 を結合 →「いし」→「石」")
                     }
 
-                    HelpSection(title: "⑤ 保存・コピー") {
-                        HelpRow(icon: "bookmark", text: "「保存」ボタンで現在の語呂合わせを履歴に保存します。")
-                        HelpRow(icon: "doc.on.doc", text: "「コピー」ボタンで結果をクリップボードにコピーします。")
-                        HelpRow(icon: "clock.arrow.circlepath", text: "右上の時計アイコンから保存済みの語呂合わせを参照・復元できます。")
+                    HelpSection(title: "⑤ 保存・コピー・シェア") {
+                        HelpRow(icon: "bookmark", text: "「保存」ボタンで現在の語呂合わせを履歴に保存します。読みの選択・グループ結合・カスタム言葉もすべて記録されます。")
+                        HelpRow(icon: "clock.arrow.circlepath", text: "右上の時計アイコンから保存済みの語呂合わせを一覧表示・復元できます。")
+                        HelpRow(icon: "sparkles", text: "一度登録した言葉は「候補」として次回から自動表示されます。使うたびに自分だけの辞書が育ちます。")
+                        HelpRow(icon: "doc.on.doc", text: "「コピー」ボタンで結果をクリップボードにコピーして、メモやメッセージアプリに貼り付けられます。")
+                        HelpRow(icon: "person.2", text: "自分だけのオリジナル語呂合わせを作ったら、コピーして友達や家族にシェアしましょう！「この番号、こう覚えてるよ」とアピールできます。")
                     }
 
                     Divider().background(Color(white: 0.3))
