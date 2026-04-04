@@ -82,6 +82,36 @@ struct HelpView: View {
 
                     Divider().background(Color(white: 0.3))
 
+                    // 抵抗器カラーコード
+                    HelpSection(title: "Ω 抵抗器カラーコード（Ωボタン）") {
+                        HelpRow(icon: "resistor", text: "右上の「Ω」ボタンをタップすると抵抗値表示モードをオン/オフできます。")
+                        HelpRow(icon: "info.circle", text: "数字を入力すると、4桁ずつ抵抗器のカラーバンドとして表示します。")
+                        HelpRow(icon: "number.square", text: "カラーコードの読み方：上2桁が有効数字、3桁目が乗数（×10ⁿ）。例：「472」→ 47 × 10² = 4.7kΩ")
+                        HelpRow(icon: "person.text.rectangle", text: "マイナンバー（12桁）を入力すると3グループ分の抵抗値が計算され、合計抵抗値も表示されます。")
+                        HelpRow(icon: "sparkles", text: "例：あなたのマイナンバーの抵抗値は何Ωでしょう？")
+                    }
+
+                    HelpSection(title: "　　カラーコード対応表") {
+                        VStack(spacing: 4) {
+                            ForEach(resistorColorRows, id: \.digit) { row in
+                                HStack(spacing: 10) {
+                                    Text(row.digit)
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(row.textColor)
+                                        .frame(width: 28, height: 28)
+                                        .background(row.color)
+                                        .cornerRadius(4)
+                                    Text(row.name)
+                                        .foregroundColor(Color(white: 0.85))
+                                        .font(.system(size: 14))
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+
+                    Divider().background(Color(white: 0.3))
+
                     // ポケベル暗号
                     HelpSection(title: "📟 ポケベル暗号について") {
                         Text("1990年代、日本の若者がポケベル（ポケット呼出受信機）で使っていた数字の暗号です。GoroBellはこの文化にインスパイアされています。")
@@ -113,6 +143,19 @@ struct HelpView: View {
             }
         }
     }
+
+    private var resistorColorRows: [(digit: String, name: String, color: Color, textColor: Color)] = [
+        ("0", "黒  × 1",         Color(white: 0.08),                                          .white),
+        ("1", "茶  × 10",        Color(red: 0.45, green: 0.22, blue: 0.05),                  .white),
+        ("2", "赤  × 100",       Color(red: 0.85, green: 0.1,  blue: 0.1),                   .white),
+        ("3", "橙  × 1k",        Color(red: 1.0,  green: 0.5,  blue: 0.0),                   .black),
+        ("4", "黄  × 10k",       Color(red: 1.0,  green: 0.85, blue: 0.0),                   .black),
+        ("5", "緑  × 100k",      Color(red: 0.1,  green: 0.65, blue: 0.1),                   .white),
+        ("6", "青  × 1M",        Color(red: 0.1,  green: 0.2,  blue: 0.9),                   .white),
+        ("7", "紫  × 10M",       Color(red: 0.5,  green: 0.0,  blue: 0.8),                   .white),
+        ("8", "灰  × 100M",      Color(white: 0.55),                                          .white),
+        ("9", "白  × 1G",        Color.white,                                                 .black),
+    ]
 
     private var readingRows: [(digit: String, readings: String)] = [
         ("0", "れ / ぜ / お / まる / ま"),
