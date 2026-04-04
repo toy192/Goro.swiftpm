@@ -12,6 +12,8 @@ struct ContentView: View {
     @State private var showingHelp = false
     @State private var showingResistor = false
     @State private var showingBase128 = false
+    @State private var copiedBase = false
+    @State private var copiedBaseReversed = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -242,19 +244,43 @@ struct ContentView: View {
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
-                        Text(numberBase128)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.cyan)
-                            .padding(.horizontal, 16)
+                        HStack(alignment: .bottom) {
+                            Text(numberBase128)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.cyan)
+                                .padding(.leading, 16)
+                            Spacer()
+                            Button {
+                                UIPasteboard.general.string = numberBase128
+                                copiedBase = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copiedBase = false }
+                            } label: {
+                                Image(systemName: copiedBase ? "checkmark" : "doc.on.doc")
+                                    .foregroundColor(copiedBase ? .green : .cyan)
+                            }
+                            .padding(.trailing, 16)
+                        }
                         Text("逆順: \(String(digits.reversed()))")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
                             .padding(.top, 4)
-                        Text(numberBase128Reversed)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundColor(.teal)
-                            .padding(.horizontal, 16)
+                        HStack(alignment: .bottom) {
+                            Text(numberBase128Reversed)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.teal)
+                                .padding(.leading, 16)
+                            Spacer()
+                            Button {
+                                UIPasteboard.general.string = numberBase128Reversed
+                                copiedBaseReversed = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copiedBaseReversed = false }
+                            } label: {
+                                Image(systemName: copiedBaseReversed ? "checkmark" : "doc.on.doc")
+                                    .foregroundColor(copiedBaseReversed ? .green : .teal)
+                            }
+                            .padding(.trailing, 16)
+                        }
                     }
                     .padding(.vertical, 8)
                 }
