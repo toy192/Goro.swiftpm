@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var copiedBaseReversed = false
     @State private var inputKanji = ""
     @State private var copiedBaseDecode = false
+    @State private var decodeReversed = false
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -65,7 +66,10 @@ struct ContentView: View {
         return baseConvert(String(digits.reversed()))
     }
 
-    var baseDecodeResult: String { baseDecode(inputKanji) }
+    var baseDecodeResult: String {
+        let decoded = baseDecode(inputKanji)
+        return decodeReversed ? String(decoded.reversed()) : decoded
+    }
 
     private func baseDecode(_ text: String) -> String {
         guard !text.isEmpty else { return "" }
@@ -311,10 +315,18 @@ struct ContentView: View {
 
                 if showingBase128 {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("逆変換（漢字→数字）")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color(white: 0.5))
-                            .padding(.horizontal, 16)
+                        HStack {
+                            Text("逆変換（漢字→数字）")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(white: 0.5))
+                            Spacer()
+                            Toggle("逆順", isOn: $decodeReversed)
+                                .toggleStyle(.button)
+                                .font(.system(size: 11))
+                                .tint(.teal)
+                                .padding(.trailing, 16)
+                        }
+                        .padding(.horizontal, 16)
                         HStack(spacing: 8) {
                             TextField("漢字・かなを入力...", text: $inputKanji)
                                 .font(.title3)
