@@ -54,8 +54,14 @@ struct ContentView: View {
         return words.joined(separator: (isMyNumber || isPhoneNumber || isLandline) ? " " : "")
     }
 
-    var numberBase128: String {
+    var numberBase128: String { baseConvert(inputNumber.filter { $0.isNumber }) }
+
+    var numberBase128Reversed: String {
         let digits = inputNumber.filter { $0.isNumber }
+        return baseConvert(String(digits.reversed()))
+    }
+
+    private func baseConvert(_ digits: String) -> String {
         guard !digits.isEmpty else { return "" }
         let leadingZeroCount = digits.prefix(while: { $0 == "0" }).count
         let leadingPrefix = String(repeating: String(base128Alphabet[0]), count: leadingZeroCount)
@@ -240,6 +246,17 @@ struct ContentView: View {
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.cyan)
                             .padding(.horizontal, 16)
+                        if isPhoneNumber {
+                            Text("逆順: \(String(digits.reversed()))")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(white: 0.5))
+                                .padding(.horizontal, 16)
+                                .padding(.top, 4)
+                            Text(numberBase128Reversed)
+                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .foregroundColor(.teal)
+                                .padding(.horizontal, 16)
+                        }
                     }
                     .padding(.vertical, 8)
                 }
