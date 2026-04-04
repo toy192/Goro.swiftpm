@@ -495,12 +495,11 @@ struct MergeButton: View {
 
 // MARK: - baseアルファベット（常用漢字・人名用漢字対応）
 
-// 英字・ひらがな + 常用漢字（小1〜小6・中学以降）+ 人名用漢字 を含む（数字は除外）
+// ひらがな + 常用漢字（小1〜小6・中学以降）+ 人名用漢字 を含む（数字・英字は除外）
 // 重複を自動除去して一意な文字セットを構築
 private let base128Alphabet: [Character] = {
     var seen = Set<Character>()
     return Array((
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
         // ひらがな: 基本46 + 濁音20
         "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
         "がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
