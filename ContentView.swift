@@ -232,7 +232,7 @@ struct ContentView: View {
                 if showingBase128 && !inputNumber.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         let digits = inputNumber.filter { $0.isNumber }
-                        Text("base128変換（可逆）: \(digits.count)桁 → \(numberBase128.count)文字")
+                        Text("base\(base128Alphabet.count)変換（可逆）: \(digits.count)桁 → \(numberBase128.count)文字")
                             .font(.system(size: 11))
                             .foregroundColor(Color(white: 0.5))
                             .padding(.horizontal, 16)
@@ -493,14 +493,16 @@ struct MergeButton: View {
     }
 }
 
-// MARK: - base128アルファベット
+// MARK: - base208アルファベット
 
-// 数字10 + 大文字26 + 小文字26 + 基本ひらがな46 + 濁音ひらがな20 = 128文字
+// 数字10 + 大文字26 + 小文字26 + 基本ひらがな46 + 濁音ひらがな20 + 小学1年漢字80 = 208文字
 private let base128Alphabet: [Character] = Array(
     "0123456789" +
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
     "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
-    "がぎぐげござじずぜぞだぢづでどばびぶべぼ"
+    "がぎぐげござじずぜぞだぢづでどばびぶべぼ" +
+    // 小学1年漢字: 80文字
+    "一右雨円王音下火花貝学気九休玉金空月犬見五口校左三山子四糸字耳七車手十出女小上森人水正生青夕石赤千川先早草足村大男竹中虫町天田土二日入年白八百文木本名目立力林六"
 )
 
 // MARK: - 抵抗器カラーコード
