@@ -14,8 +14,9 @@ let package = Package(
     ],
     products: [
         .iOSApplication(
-            name: "Goro",
+            name: "GoroBell",
             targets: ["AppModule"],
+            bundleIdentifier: "jp.toy192.gorobell",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .placeholder(icon: .calculator),
