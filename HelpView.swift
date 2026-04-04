@@ -70,6 +70,18 @@ struct HelpView: View {
 
                     Divider().background(Color(white: 0.3))
 
+                    // Base変換
+                    HelpSection(title: "🔵 Base変換（B128ボタン）") {
+                        HelpRow(icon: "number", text: "右上の「B128」ボタンをタップするとBase変換モードをオン/オフできます。")
+                        HelpRow(icon: "arrow.right", text: "数字を入力すると、ひらがな・漢字で表現した変換結果を表示します（シアン色）。")
+                        HelpRow(icon: "arrow.left.arrow.right", text: "逆順変換も同時に表示されます（ティール色）。携帯番号の語呂に便利です。")
+                        HelpRow(icon: "arrow.left", text: "「逆変換」フィールドに漢字・かなを入力すると元の数字に復元できます（黄色）。")
+                        HelpRow(icon: "doc.on.doc", text: "各結果の右端のアイコンをタップするとクリップボードにコピーできます。")
+                        HelpRow(icon: "lock", text: "変換は可逆です。同じアルファベット（約1949文字）を使えばいつでも元の数字に戻せます。")
+                    }
+
+                    Divider().background(Color(white: 0.3))
+
                     // ポケベル暗号
                     HelpSection(title: "📟 ポケベル暗号について") {
                         Text("1990年代、日本の若者がポケベル（ポケット呼出受信機）で使っていた数字の暗号です。GoroBellはこの文化にインスパイアされています。")
