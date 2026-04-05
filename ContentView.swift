@@ -27,6 +27,9 @@ struct ContentView: View {
     @State private var grasshopperVisible = false
     @State private var grasshopperX: CGFloat = -60
     @State private var grasshopperY: CGFloat = 0
+    @State private var frogVisible = false
+    @State private var frogX: CGFloat = -60
+    @State private var frogY: CGFloat = 0
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -79,6 +82,33 @@ struct ContentView: View {
     var baseDecodeResult: String {
         let decoded = baseDecode(inputKanji)
         return decodeReversed ? String(decoded.reversed()) : decoded
+    }
+
+    private func runFrog() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        frogX = -50
+        frogY = screenH * 0.88
+        frogVisible = true
+        let hops: [(x: CGFloat, y: CGFloat, delay: Double)] = [
+            (screenW * 0.2,  screenH * 0.65, 0.0),
+            (screenW * 0.35, screenH * 0.88, 0.45),
+            (screenW * 0.55, screenH * 0.65, 0.9),
+            (screenW * 0.7,  screenH * 0.88, 1.35),
+            (screenW * 0.9,  screenH * 0.65, 1.8),
+            (screenW + 60,   screenH * 0.88, 2.25),
+        ]
+        for hop in hops {
+            DispatchQueue.main.asyncAfter(deadline: .now() + hop.delay) {
+                withAnimation(.interpolatingSpring(stiffness: 180, damping: 12)) {
+                    frogX = hop.x
+                    frogY = hop.y
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) {
+            frogVisible = false
+        }
     }
 
     private func runGrasshopper() {
@@ -504,6 +534,9 @@ struct ContentView: View {
                                         if word == "イナゴ" || word == "🦗" {
                                             runGrasshopper()
                                         }
+                                        if word == "ケロケロ" || word == "🐸" {
+                                            runFrog()
+                                        }
                                     },
                                     onSplit: {
                                         mergedGroups.removeValue(forKey: group.id)
@@ -606,6 +639,12 @@ struct ContentView: View {
                     Text("🦗")
                         .font(.system(size: 44))
                         .position(x: grasshopperX, y: grasshopperY)
+                        .allowsHitTesting(false)
+                }
+                if frogVisible {
+                    Text("🐸")
+                        .font(.system(size: 44))
+                        .position(x: frogX, y: frogY)
                         .allowsHitTesting(false)
                 }
             }
