@@ -17,6 +17,9 @@ struct ContentView: View {
     @State private var inputKanji = ""
     @State private var copiedBaseDecode = false
     @State private var decodeReversed = false
+    @State private var ladybugVisible = false
+    @State private var ladybugX: CGFloat = -60
+    @State private var ladybugY: CGFloat = 0
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -69,6 +72,20 @@ struct ContentView: View {
     var baseDecodeResult: String {
         let decoded = baseDecode(inputKanji)
         return decodeReversed ? String(decoded.reversed()) : decoded
+    }
+
+    private func runLadybug() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        ladybugX = -44
+        ladybugY = CGFloat.random(in: screenH * 0.3 ... screenH * 0.75)
+        ladybugVisible = true
+        withAnimation(.linear(duration: 2.2)) {
+            ladybugX = screenW + 44
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
+            ladybugVisible = false
+        }
     }
 
     private func baseDecode(_ text: String) -> String {
@@ -423,6 +440,9 @@ struct ContentView: View {
                                     },
                                     onWordChange: { word in
                                         customWords[group.id] = word.isEmpty ? nil : word
+                                        if word == "てんとう虫" || word == "🐞" {
+                                            runLadybug()
+                                        }
                                     },
                                     onSplit: {
                                         mergedGroups.removeValue(forKey: group.id)
@@ -507,6 +527,16 @@ struct ContentView: View {
                 }
             }
         }
+        .overlay(
+            GeometryReader { geo in
+                if ladybugVisible {
+                    Text("🐞")
+                        .font(.system(size: 44))
+                        .position(x: ladybugX, y: ladybugY)
+                        .allowsHitTesting(false)
+                }
+            }
+        )
         .sheet(isPresented: $showingHelp) {
             HelpView()
         }
