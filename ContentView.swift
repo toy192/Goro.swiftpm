@@ -20,6 +20,10 @@ struct ContentView: View {
     @State private var ladybugVisible = false
     @State private var ladybugX: CGFloat = -60
     @State private var ladybugY: CGFloat = 0
+    @State private var butterflyVisible = false
+    @State private var butterflyX: CGFloat = -60
+    @State private var butterflyY: CGFloat = 0
+    @State private var butterflyOffset: CGFloat = 0
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -72,6 +76,21 @@ struct ContentView: View {
     var baseDecodeResult: String {
         let decoded = baseDecode(inputKanji)
         return decodeReversed ? String(decoded.reversed()) : decoded
+    }
+
+    private func runButterfly() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        butterflyX = -50
+        butterflyY = CGFloat.random(in: screenH * 0.1 ... screenH * 0.4)
+        butterflyOffset = 0
+        butterflyVisible = true
+        withAnimation(.easeInOut(duration: 3.5)) {
+            butterflyX = screenW + 50
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.6) {
+            butterflyVisible = false
+        }
     }
 
     private func runLadybug() {
@@ -443,6 +462,9 @@ struct ContentView: View {
                                         if word == "てんとう虫" || word == "🐞" {
                                             runLadybug()
                                         }
+                                        if word == "てふてふ" || word == "蝶々" || word == "🦋" {
+                                            runButterfly()
+                                        }
                                     },
                                     onSplit: {
                                         mergedGroups.removeValue(forKey: group.id)
@@ -533,6 +555,12 @@ struct ContentView: View {
                     Text("🐞")
                         .font(.system(size: 44))
                         .position(x: ladybugX, y: ladybugY)
+                        .allowsHitTesting(false)
+                }
+                if butterflyVisible {
+                    Text("🦋")
+                        .font(.system(size: 44))
+                        .position(x: butterflyX, y: butterflyY)
                         .allowsHitTesting(false)
                 }
             }
