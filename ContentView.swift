@@ -24,6 +24,9 @@ struct ContentView: View {
     @State private var butterflyX: CGFloat = -60
     @State private var butterflyY: CGFloat = 0
     @State private var butterflyOffset: CGFloat = 0
+    @State private var grasshopperVisible = false
+    @State private var grasshopperX: CGFloat = -60
+    @State private var grasshopperY: CGFloat = 0
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -76,6 +79,39 @@ struct ContentView: View {
     var baseDecodeResult: String {
         let decoded = baseDecode(inputKanji)
         return decodeReversed ? String(decoded.reversed()) : decoded
+    }
+
+    private func runGrasshopper() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        grasshopperX = -50
+        grasshopperY = screenH * 0.85
+        grasshopperVisible = true
+        // ぴょんぴょん跳ねながら横断
+        withAnimation(.interpolatingSpring(stiffness: 120, damping: 8).repeatCount(4, autoreverses: false).speed(1.5)) {
+            grasshopperX = screenW * 0.25
+            grasshopperY = screenH * 0.6
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.interpolatingSpring(stiffness: 120, damping: 8)) {
+                grasshopperX = screenW * 0.55
+                grasshopperY = screenH * 0.85
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.interpolatingSpring(stiffness: 120, damping: 8)) {
+                grasshopperX = screenW * 0.8
+                grasshopperY = screenH * 0.6
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.linear(duration: 0.3)) {
+                grasshopperX = screenW + 60
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
+            grasshopperVisible = false
+        }
     }
 
     private func runButterfly() {
@@ -465,6 +501,9 @@ struct ContentView: View {
                                         if word == "てふてふ" || word == "蝶々" || word == "🦋" {
                                             runButterfly()
                                         }
+                                        if word == "イナゴ" || word == "🦗" {
+                                            runGrasshopper()
+                                        }
                                     },
                                     onSplit: {
                                         mergedGroups.removeValue(forKey: group.id)
@@ -561,6 +600,12 @@ struct ContentView: View {
                     Text("🦋")
                         .font(.system(size: 44))
                         .position(x: butterflyX, y: butterflyY)
+                        .allowsHitTesting(false)
+                }
+                if grasshopperVisible {
+                    Text("🦗")
+                        .font(.system(size: 44))
+                        .position(x: grasshopperX, y: grasshopperY)
                         .allowsHitTesting(false)
                 }
             }
