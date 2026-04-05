@@ -78,7 +78,7 @@ struct ContentView: View {
         let screenW = UIScreen.main.bounds.width
         let screenH = UIScreen.main.bounds.height
         ladybugX = -44
-        ladybugY = CGFloat.random(in: screenH * 0.3 ... screenH * 0.75)
+        ladybugY = CGFloat.random(in: screenH * 0.08 ... screenH * 0.25)
         ladybugVisible = true
         withAnimation(.linear(duration: 2.2)) {
             ladybugX = screenW + 44
