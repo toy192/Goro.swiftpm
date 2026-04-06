@@ -30,6 +30,9 @@ struct ContentView: View {
     @State private var frogVisible = false
     @State private var frogX: CGFloat = -60
     @State private var frogY: CGFloat = 0
+    @State private var beetleVisible = false
+    @State private var beetleX: CGFloat = -60
+    @State private var beetleY: CGFloat = 0
 
     var groupItems: [GoroModel.GroupItem] {
         GoroModel.groupItems(from: inputNumber, mergedGroups: mergedGroups)
@@ -82,6 +85,35 @@ struct ContentView: View {
     var baseDecodeResult: String {
         let decoded = baseDecode(inputKanji)
         return decodeReversed ? String(decoded.reversed()) : decoded
+    }
+
+    private func runBeetle() {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        beetleX = -50
+        beetleY = screenH * 0.9
+        beetleVisible = true
+        // 素早くジグザグ走る
+        let steps: [(x: CGFloat, y: CGFloat, delay: Double)] = [
+            (screenW * 0.15, screenH * 0.82, 0.0),
+            (screenW * 0.3,  screenH * 0.92, 0.18),
+            (screenW * 0.45, screenH * 0.80, 0.36),
+            (screenW * 0.6,  screenH * 0.92, 0.54),
+            (screenW * 0.75, screenH * 0.82, 0.72),
+            (screenW * 0.9,  screenH * 0.90, 0.90),
+            (screenW + 60,   screenH * 0.90, 1.05),
+        ]
+        for step in steps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + step.delay) {
+                withAnimation(.linear(duration: 0.18)) {
+                    beetleX = step.x
+                    beetleY = step.y
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+            beetleVisible = false
+        }
     }
 
     private func runFrog() {
@@ -537,6 +569,9 @@ struct ContentView: View {
                                         if word == "ケロケロ" || word == "🐸" {
                                             runFrog()
                                         }
+                                        if word == "オサムシ" || word == "🪲" {
+                                            runBeetle()
+                                        }
                                     },
                                     onSplit: {
                                         mergedGroups.removeValue(forKey: group.id)
@@ -645,6 +680,12 @@ struct ContentView: View {
                     Text("🐸")
                         .font(.system(size: 44))
                         .position(x: frogX, y: frogY)
+                        .allowsHitTesting(false)
+                }
+                if beetleVisible {
+                    Text("🪲")
+                        .font(.system(size: 44))
+                        .position(x: beetleX, y: beetleY)
                         .allowsHitTesting(false)
                 }
             }
