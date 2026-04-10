@@ -711,6 +711,8 @@ struct HistoryView: View {
     @ObservedObject var store: HistoryStore
     let onRestore: (HistoryItem) -> Void
 
+    @State private var copiedAll = false
+
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .short
@@ -718,6 +720,10 @@ struct HistoryView: View {
         f.locale = Locale(identifier: "ja_JP")
         return f
     }()
+
+    private var allItemsText: String {
+        store.items.map { "\($0.inputNumber)\t\($0.result)" }.joined(separator: "\n")
+    }
 
     var body: some View {
         ZStack {
@@ -728,6 +734,22 @@ struct HistoryView: View {
                         .foregroundColor(.white)
                         .font(.system(size: 20, weight: .bold))
                     Spacer()
+                    if !store.items.isEmpty {
+                        Button {
+                            UIPasteboard.general.string = allItemsText
+                            copiedAll = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                copiedAll = false
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: copiedAll ? "checkmark" : "doc.on.doc")
+                                Text(copiedAll ? "コピー済" : "全コピー")
+                                    .font(.system(size: 13))
+                            }
+                            .foregroundColor(copiedAll ? .green : .orange)
+                        }
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 24)
