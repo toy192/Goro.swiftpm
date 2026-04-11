@@ -8,6 +8,34 @@ struct HistoryItem: Codable, Identifiable {
     let mergedGroups: [String: Int]
     let selectedReadings: [String: String]
     let customWords: [String: String]
+    var comment: String
+
+    init(id: UUID = UUID(), date: Date = Date(),
+         inputNumber: String, result: String,
+         mergedGroups: [String: Int], selectedReadings: [String: String],
+         customWords: [String: String], comment: String = "") {
+        self.id = id
+        self.date = date
+        self.inputNumber = inputNumber
+        self.result = result
+        self.mergedGroups = mergedGroups
+        self.selectedReadings = selectedReadings
+        self.customWords = customWords
+        self.comment = comment
+    }
+
+    // 旧データとの互換性のため comment を省略可能にデコード
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        date = try c.decode(Date.self, forKey: .date)
+        inputNumber = try c.decode(String.self, forKey: .inputNumber)
+        result = try c.decode(String.self, forKey: .result)
+        mergedGroups = try c.decode([String: Int].self, forKey: .mergedGroups)
+        selectedReadings = try c.decode([String: String].self, forKey: .selectedReadings)
+        customWords = try c.decode([String: String].self, forKey: .customWords)
+        comment = (try? c.decode(String.self, forKey: .comment)) ?? ""
+    }
 }
 
 class HistoryStore: ObservableObject {
@@ -20,15 +48,15 @@ class HistoryStore: ObservableObject {
     func add(inputNumber: String, result: String,
              mergedGroups: [Int: Int],
              selectedReadings: [Int: String],
-             customWords: [Int: String]) {
+             customWords: [Int: String],
+             comment: String = "") {
         let item = HistoryItem(
-            id: UUID(),
-            date: Date(),
             inputNumber: inputNumber,
             result: result,
             mergedGroups: Dictionary(uniqueKeysWithValues: mergedGroups.map { (String($0.key), $0.value) }),
             selectedReadings: Dictionary(uniqueKeysWithValues: selectedReadings.map { (String($0.key), $0.value) }),
-            customWords: Dictionary(uniqueKeysWithValues: customWords.map { (String($0.key), $0.value) })
+            customWords: Dictionary(uniqueKeysWithValues: customWords.map { (String($0.key), $0.value) }),
+            comment: comment
         )
         items.insert(item, at: 0)
         persist()

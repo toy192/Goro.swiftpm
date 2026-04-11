@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var customWords: [Int: String] = [:]
     @State private var copied = false
     @State private var saved = false
+    @State private var showingSaveAlert = false
+    @State private var pendingComment = ""
     @State private var showingHistory = false
     @State private var showingHelp = false
     @State private var showingResistor = false
@@ -628,17 +630,8 @@ struct ContentView: View {
                             }
 
                             Button {
-                                historyStore.add(
-                                    inputNumber: inputNumber,
-                                    result: result,
-                                    mergedGroups: mergedGroups,
-                                    selectedReadings: selectedReadings,
-                                    customWords: customWords
-                                )
-                                saved = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    saved = false
-                                }
+                                pendingComment = ""
+                                showingSaveAlert = true
                             } label: {
                                 HStack {
                                     Image(systemName: saved ? "checkmark" : "bookmark")
@@ -702,6 +695,26 @@ struct ContentView: View {
                 showingHistory = false
             }
         }
+        .alert("コメントを追加", isPresented: $showingSaveAlert) {
+            TextField("メモ（任意）", text: $pendingComment)
+            Button("保存") {
+                historyStore.add(
+                    inputNumber: inputNumber,
+                    result: result,
+                    mergedGroups: mergedGroups,
+                    selectedReadings: selectedReadings,
+                    customWords: customWords,
+                    comment: pendingComment
+                )
+                saved = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    saved = false
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(result)")
+        }
     }
 }
 
@@ -722,7 +735,10 @@ struct HistoryView: View {
     }()
 
     private var allItemsText: String {
-        store.items.map { "\($0.inputNumber)\t\($0.result)" }.joined(separator: "\n")
+        store.items.map { item in
+            let comment = item.comment.isEmpty ? "" : "\t\(item.comment)"
+            return "\(item.inputNumber)\t\(item.result)\(comment)"
+        }.joined(separator: "\n")
     }
 
     var body: some View {
@@ -779,6 +795,11 @@ struct HistoryView: View {
                                     Text(item.result)
                                         .font(.system(size: 22, weight: .bold))
                                         .foregroundColor(.white)
+                                    if !item.comment.isEmpty {
+                                        Text(item.comment)
+                                            .font(.system(size: 13))
+                                            .foregroundColor(Color(white: 0.6))
+                                    }
                                 }
                                 .padding(.vertical, 4)
                             }
